@@ -5,7 +5,7 @@ import {
   type Archetype4,
 } from "./archetypes4";
 import { scoreAspiration, type AspirationChoice, type AspirationItem } from "./aspiration";
-import type { Scenario } from "./scenarios";
+import { CONTEXTS, type Context, type Scenario } from "./scenarios";
 import { TRAITS, type Trait } from "./types";
 
 /** Zeroed counter over the four energies. */
@@ -168,6 +168,56 @@ export function traitsFromScenarios(
   return out;
 }
 
+export interface ContextReading {
+  context: Context;
+  /** Which energy you reached for most in this part of school life. */
+  dominant: Archetype4;
+  counts: Record<Archetype4, number>;
+  answered: number;
+  /** False when too few situations covered it to say anything. */
+  reliable: boolean;
+}
+
+const MIN_SITUATIONS_PER_CONTEXT = 3;
+
+/**
+ * The same man is not the same in every room. Reporting which energy he reaches
+ * for in group work, in conflict, with teachers and on his own is usually more
+ * useful than a single overall figure — and a gap between two contexts is a
+ * finding in itself.
+ */
+export function readContexts(
+  choices: Readonly<Record<string, string | undefined>>,
+  scenarios: readonly Scenario[],
+): ContextReading[] {
+  return CONTEXTS.map((context) => {
+    const counts = zeros();
+    let answered = 0;
+    for (const scenario of scenarios) {
+      if (scenario.kind !== "standing" || scenario.context !== context) continue;
+      const option = scenario.options.find((o) => o.id === choices[scenario.id]);
+      if (!option) continue;
+      counts[option.archetype] += 1;
+      answered += 1;
+    }
+    let dominant: Archetype4 = "king";
+    let best = -1;
+    for (const id of ARCHETYPES_4) {
+      if (counts[id] > best) {
+        best = counts[id];
+        dominant = id;
+      }
+    }
+    return {
+      context,
+      dominant,
+      counts,
+      answered,
+      reliable: answered >= MIN_SITUATIONS_PER_CONTEXT,
+    };
+  }).filter((r) => r.answered > 0);
+}
+
 export interface ArchetypeReading {
   archetype: Archetype4;
   /** How often you reach for this energy, 0–100 with chance at 50. */
@@ -294,6 +344,9 @@ export interface FourArchetypeProfile {
   confidence: Confidence;
   traitScores: Record<Trait, number>;
   facets: Record<string, number>;
+  contexts: ContextReading[];
+  /** True when at least two reliable contexts disagree about the leading energy. */
+  contextSplit: boolean;
   answered: number;
   total: number;
 }
@@ -329,6 +382,7 @@ export function buildFourArchetypeProfile(input: {
   const dominantMargin =
     Math.round(((byAccess[0] as ArchetypeReading).access - (byAccess[1] as ArchetypeReading).access) * 10) / 10;
 
+  const contexts = readContexts(input.scenarioChoices, input.scenarios);
   const accessValues = readings.map((r) => r.access);
   const spread = Math.round((Math.max(...accessValues) - Math.min(...accessValues)) * 10) / 10;
 
@@ -348,6 +402,9 @@ export function buildFourArchetypeProfile(input: {
     confidence: computeConfidence(tally, dominantMargin),
     traitScores: traitsFromScenarios(input.scenarioChoices, input.scenarios),
     facets: tally.facets,
+    contexts,
+    contextSplit:
+      new Set(contexts.filter((c) => c.reliable).map((c) => c.dominant)).size > 1,
     answered: tally.standingAnswered + tally.pressureAnswered,
     total: input.scenarios.length,
   };

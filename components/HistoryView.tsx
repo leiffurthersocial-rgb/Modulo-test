@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TrendChart } from "./TrendChart";
 import { Button, ButtonLink, Card, Disclaimer, Eyebrow, Meter } from "./ui";
+import { attemptConfidence } from "@/lib/iq/scoring";
 import { stableCategoryScores, stableEstimate, type AttemptSummary } from "@/lib/iq/stable";
 import { CATEGORY_LABELS, type Category } from "@/lib/iq/types";
 import { ARCHETYPES } from "@/lib/personality/archetypes";
@@ -90,6 +91,38 @@ export function HistoryView() {
   const summaries = useMemo(() => chronological.map(toSummary), [chronological]);
   const stable = useMemo(() => stableEstimate(summaries), [summaries]);
   const domains = useMemo(() => stableCategoryScores(summaries), [summaries]);
+  // Confidence in the combined estimate: the weighted average of each
+  // attempt's own confidence, lifted by how much total evidence there is.
+  const { stablePercent, stableRange } = useMemo(() => {
+    if (stable.iq === null || chronological.length === 0) {
+      return { stablePercent: 0, stableRange: [0, 0] as [number, number] };
+    }
+    const weighted = chronological.map((a) => ({
+      confidence: attemptConfidence(a),
+      weight: stable.weighted.find((w) => w.attempt.id === a.id)?.weight ?? 0,
+    }));
+    const totalWeight = weighted.reduce((s, w) => s + w.weight, 0);
+    const base =
+      totalWeight === 0
+        ? 0
+        : weighted.reduce((s, w) => s + w.confidence.percent * w.weight, 0) / totalWeight;
+    // More independent evidence tightens the combined estimate beyond any one attempt.
+    const evidence = Math.min(1, stable.totalWeight / 2.2);
+    const percent = Math.round(Math.min(96, base * (0.75 + 0.35 * evidence)));
+    const margin = Math.max(
+      2,
+      Math.round(
+        (weighted.reduce((s, w) => s + w.confidence.margin * w.weight, 0) /
+          (totalWeight || 1)) /
+          Math.sqrt(Math.max(1, chronological.length)),
+      ),
+    );
+    return {
+      stablePercent: percent,
+      stableRange: [stable.iq - margin, stable.iq + margin] as [number, number],
+    };
+  }, [chronological, stable]);
+
   const weightById = useMemo(
     () => new Map(stable.weighted.map((w) => [w.attempt.id, w.weight])),
     [stable],
@@ -132,8 +165,12 @@ export function HistoryView() {
             <div>
               <p className="text-[12px] uppercase tracking-[0.14em] text-fog-400">Stable estimate</p>
               <p className="tabular mt-2 text-5xl font-semibold tracking-tight text-fog-100">{stable.iq}</p>
+              <p className="tabular mt-1 text-[15px] text-fog-400">
+                range {stableRange[0]}–{stableRange[1]}
+              </p>
               <p className="mt-2 text-[13px] text-fog-400">
-                {stable.attempts} attempt{stable.attempts === 1 ? "" : "s"} · {stable.confidence} confidence · {stable.spread}-point spread
+                {stable.attempts} attempt{stable.attempts === 1 ? "" : "s"} ·{" "}
+                {stablePercent}% confidence · {stable.spread}-point spread
               </p>
             </div>
             <p className="max-w-sm text-[12.5px] leading-relaxed text-fog-400">
@@ -190,6 +227,15 @@ export function HistoryView() {
           <ul className="mt-5 space-y-3">
             {attempts.map((attempt) => {
               const weight = weightById.get(attempt.id) ?? 0;
+              const conf = attemptConfidence(attempt);
+              const confTone =
+                conf.percent >= 72
+                  ? "border-jade-500/40 bg-jade-500/10 text-jade-400"
+                  : conf.percent >= 55
+                    ? "border-jade-500/30 bg-jade-500/5 text-jade-400"
+                    : conf.percent >= 38
+                      ? "border-sand-500/40 bg-sand-500/10 text-sand-400"
+                      : "border-red-900/60 bg-red-950/25 text-red-300";
               return (
                 <li key={attempt.id}>
                   <Card className="p-5">
@@ -197,10 +243,20 @@ export function HistoryView() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                           <p className="tabular text-2xl font-semibold text-fog-100">{attempt.iq}</p>
+                          <p className="tabular text-[13px] text-fog-400">
+                            ({attempt.low}–{attempt.high})
+                          </p>
                           <p className="text-[13.5px] text-sand-400">{attempt.band}</p>
                           <p className="tabular text-[12.5px] text-fog-400">
                             {attempt.percentile}th percentile
                           </p>
+                          <span
+                            className={`tabular inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] ${confTone}`}
+                            title={conf.reasons.join(" ")}
+                          >
+                            {conf.percent}% confidence
+                            <span className="opacity-70">±{Math.round(conf.margin)}</span>
+                          </span>
                         </div>
                         <p className="mt-1.5 text-[13px] text-fog-300">{attempt.testName}</p>
                         <p className="tabular mt-1 text-[12px] text-fog-400">

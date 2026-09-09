@@ -16,12 +16,18 @@ import {
   buildFourArchetypeProfile,
   computeConfidence,
   facetFor,
+  readContexts,
   readShadow,
   shareToScore,
   tallyScenarios,
   traitsFromScenarios,
 } from "@/lib/personality/profile";
-import { CORE_SCENARIOS, SCENARIOS, scenariosForForm } from "@/lib/personality/scenarios";
+import {
+  CONTEXTS,
+  CORE_SCENARIOS,
+  SCENARIOS,
+  scenariosForForm,
+} from "@/lib/personality/scenarios";
 import { scoreFourArchetypes } from "@/lib/personality/scoring";
 import { TRAITS } from "@/lib/personality/types";
 
@@ -431,5 +437,68 @@ describe("the confidence interval", () => {
     }).confidence;
     expect(deep.margin).toBeLessThan(core.margin);
     expect(deep.percent).toBeGreaterThanOrEqual(core.percent);
+  });
+});
+
+describe("school-set situations", () => {
+  it("gives every situation a concrete, imaginable setting", () => {
+    for (const scenario of SCENARIOS) {
+      // A scenario only measures behaviour if the taker can picture being in it.
+      expect(scenario.setting.length, scenario.id).toBeGreaterThan(90);
+      expect(scenario.prompt.length, scenario.id).toBeGreaterThan(8);
+      expect(CONTEXTS, scenario.id).toContain(scenario.context);
+    }
+  });
+
+  it("covers every part of school life", () => {
+    const covered = new Set(standing.map((s) => s.context));
+    for (const context of CONTEXTS) expect(covered, context).toContain(context);
+  });
+
+  it("gives each context enough standing situations to report on", () => {
+    for (const context of CONTEXTS) {
+      const count = standing.filter((s) => s.context === context).length;
+      expect(count, context).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it("reads which energy is reached for in each context", () => {
+    // Answer as the Lover in friendships and the Warrior everywhere else.
+    const choices: Record<string, string> = {};
+    for (const scenario of standing) {
+      const want = scenario.context === "friendship" ? "lover" : "warrior";
+      choices[scenario.id] = scenario.options.find((o) => o.archetype === want)!.id;
+    }
+    const contexts = readContexts(choices, SCENARIOS);
+    const friendship = contexts.find((c) => c.context === "friendship")!;
+    const classroom = contexts.find((c) => c.context === "classroom")!;
+    expect(friendship.dominant).toBe("lover");
+    expect(classroom.dominant).toBe("warrior");
+
+    const profile = buildFourArchetypeProfile({
+      scenarioChoices: choices,
+      scenarios: SCENARIOS,
+      aspirationChoices: {},
+      aspirationItems: ASPIRATION_ITEMS,
+    });
+    expect(profile.contextSplit).toBe(true);
+  });
+
+  it("does not claim a split when the same energy is used everywhere", () => {
+    const profile = buildFourArchetypeProfile({
+      scenarioChoices: chooseAll("magician"),
+      scenarios: SCENARIOS,
+      aspirationChoices: {},
+      aspirationItems: ASPIRATION_ITEMS,
+    });
+    expect(profile.contextSplit).toBe(false);
+  });
+
+  it("marks a context unreliable when too few situations covered it", () => {
+    const single = standing.slice(0, 1);
+    const choices = { [single[0]!.id]: single[0]!.options[0]!.id };
+    const reading = readContexts(choices, single)[0]!;
+    expect(reading.answered).toBe(1);
+    expect(reading.reliable).toBe(false);
   });
 });

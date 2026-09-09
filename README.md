@@ -99,6 +99,15 @@ its immature form, and concrete development practices.
 
 #### Built from situations, not statements
 
+Every situation is set in school life — a Friday deadline and a group that has done nothing,
+a group chat that has turned on someone, a mark that came back lower than expected with two
+lines of feedback. A scenario only measures behaviour if the taker can picture being inside
+it; an abstract prompt gets answered by the person you believe you are, a concrete one by the
+person you are. Each is also tagged with a **context** (group work, friendships, conflict,
+teachers and rules, your own time), so the result can report which energy you reach for
+*where* — a gap between two contexts is a finding in itself.
+
+
 | Form | Items | Time |
 | --- | --- | --- |
 | Core | 18 situations + 8 priorities | ~6 min |
@@ -116,7 +125,17 @@ separately.
 
 #### Confidence
 
-Reported as a percentage with an approximate range, on the result page and in history. Three
+Both assessments report confidence as a percentage with a range, on the result page and in
+history.
+
+For an **IQ attempt** it is driven by the standard error — expressed as a fraction of the
+population SD, so 0% means no better than the population prior — then reduced by unanswered
+questions (scored wrong but carrying no information) and by recycled questions (where a
+correct answer may be recall). The combined estimate across attempts gets its own figure,
+weighted by each attempt's confidence and tightened by how much independent evidence exists.
+
+For the **archetype assessment**, reported as a percentage with an approximate range on the
+result page and in history. Three
 inputs: how many situations were answered, how concentrated the choices were (spreading
 evenly across four genuinely reveals no dominant energy), and the margin over the runner-up.
 The range is a **Wilson score interval** — the normal approximation collapses to ±0 when

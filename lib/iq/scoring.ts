@@ -281,3 +281,79 @@ export function scoreAttempt(
 
 export const DISCLAIMER =
   "Modulo: Test is an unsupervised practice assessment. It is not a clinically validated IQ test and the number it reports is an estimate produced by our own scoring model, not a diagnosis or an official score.";
+
+export interface AttemptConfidence {
+  /** 0–100. How much this attempt actually pins the estimate down. */
+  percent: number;
+  label: "low" | "moderate" | "good" | "high";
+  /** The 68% interval already carried on the attempt. */
+  low: number;
+  high: number;
+  /** Half-width of that interval, in IQ points. */
+  margin: number;
+  reasons: string[];
+}
+
+/**
+ * How much to trust a single attempt's estimate.
+ *
+ * The standard error already carries most of the answer: it falls as items
+ * accumulate and as the response pattern becomes more informative about where
+ * ability sits. It is expressed here as a percentage of the population standard
+ * deviation, so 0% means the estimate is no better than the population prior
+ * and 100% would mean no uncertainty at all. Two things then pull it down that
+ * the standard error does not see: questions left blank, which are scored wrong
+ * but are not evidence of anything, and a paper built from questions already
+ * served, where a correct answer may be recall rather than reasoning.
+ */
+export function attemptConfidence(attempt: {
+  standardError?: number;
+  low: number;
+  high: number;
+  iq: number;
+  total: number;
+  answered?: number;
+  noveltyRatio?: number;
+}): AttemptConfidence {
+  const margin = Math.max(
+    0.5,
+    attempt.standardError ?? Math.max(1, (attempt.high - attempt.low) / 2),
+  );
+
+  const precision = Math.max(0, Math.min(1, 1 - margin / POPULATION_SD));
+  const completeness =
+    attempt.answered === undefined || attempt.total === 0
+      ? 1
+      : attempt.answered / attempt.total;
+  const novelty = attempt.noveltyRatio === undefined ? 1 : Math.max(0.4, attempt.noveltyRatio);
+
+  const percent = Math.round(100 * precision * (0.6 + 0.25 * completeness + 0.15 * novelty));
+
+  const reasons: string[] = [];
+  if (attempt.total < 15) {
+    reasons.push(`Only ${attempt.total} questions — a short paper leaves a wide band.`);
+  }
+  if (completeness < 0.95) {
+    reasons.push(
+      `${attempt.total - (attempt.answered ?? attempt.total)} question(s) left unanswered, which are scored wrong but carry no information.`,
+    );
+  }
+  if (novelty < 0.75) {
+    reasons.push("Some questions had been served before, so part of this may be recall.");
+  }
+  if (reasons.length === 0) {
+    reasons.push("A full-length paper, fully answered, from questions you had not seen.");
+  }
+
+  const label: AttemptConfidence["label"] =
+    percent >= 72 ? "high" : percent >= 55 ? "good" : percent >= 38 ? "moderate" : "low";
+
+  return {
+    percent: Math.max(0, Math.min(100, percent)),
+    label,
+    low: attempt.low,
+    high: attempt.high,
+    margin: Math.round(margin * 10) / 10,
+    reasons,
+  };
+}

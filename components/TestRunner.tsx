@@ -78,6 +78,7 @@ export function TestRunner({ test }: { test: TestDefinition }) {
           iq: score.iq,
           low: score.low,
           high: score.high,
+          standardError: score.standardError,
           percentile: score.percentile,
           band: score.band,
           correct: score.correct,

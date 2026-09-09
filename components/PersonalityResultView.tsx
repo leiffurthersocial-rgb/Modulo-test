@@ -12,7 +12,11 @@ import {
   type Archetype4,
 } from "@/lib/personality/archetypes4";
 import { aspirationForForm } from "@/lib/personality/aspiration";
-import { scenariosForForm } from "@/lib/personality/scenarios";
+import {
+  CONTEXT_BLURBS,
+  CONTEXT_LABELS,
+  scenariosForForm,
+} from "@/lib/personality/scenarios";
 import { scoreFourArchetypes } from "@/lib/personality/scoring";
 import { TRAIT_LABELS, type Trait } from "@/lib/personality/types";
 import { useStore } from "@/lib/useStore";
@@ -182,6 +186,50 @@ export function PersonalityResultView({ resultId }: { resultId: string }) {
           <ConfidenceBadge confidence={four.confidence} />
         </div>
       </Section>
+
+      {four.contexts.length > 0 ? (
+        <Section label="Where you show up differently">
+          <p className="mt-2 text-[13px] leading-relaxed text-fog-400">
+            {four.contextSplit
+              ? "You do not reach for the same energy everywhere — which is the useful part. A gap between two of these is a finding in itself."
+              : "You reach for the same energy across most of school life, which is unusual and worth knowing."}
+          </p>
+          <div className="mt-5 space-y-3">
+            {four.contexts.map((reading) => {
+              const energy = ARCHETYPE_4_DEFINITIONS[reading.dominant];
+              return (
+                <div
+                  key={reading.context}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink-800 pb-3 last:border-0"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[13.5px] text-fog-100">
+                      {CONTEXT_LABELS[reading.context]}
+                    </p>
+                    <p className="mt-0.5 text-[11.5px] leading-snug text-fog-400">
+                      {CONTEXT_BLURBS[reading.context]}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-[13px]">
+                    {reading.reliable ? (
+                      <span className="text-sand-400">{energy.name}</span>
+                    ) : (
+                      <span className="text-fog-400">too few to say</span>
+                    )}
+                    <span className="tabular ml-2 text-[11.5px] text-fog-400">
+                      {reading.counts[reading.dominant]}/{reading.answered}
+                    </span>
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-[12px] leading-relaxed text-fog-400">
+            A context needs at least three situations before it is worth reporting. The deep form
+            covers each of them more thoroughly.
+          </p>
+        </Section>
+      ) : null}
 
       <Section label="What you are probably striving for" title={growth.name}>
         <p className="mt-3 text-[14px] leading-relaxed text-fog-300">

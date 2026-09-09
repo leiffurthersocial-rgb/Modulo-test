@@ -23,6 +23,8 @@ export interface StoredIqAttempt {
   iq: number;
   low: number;
   high: number;
+  /** Standard error of the estimate, in IQ points. */
+  standardError?: number;
   percentile: number;
   band: string;
   correct: number;

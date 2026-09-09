@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { QUESTION_BANK } from "@/lib/iq/bank";
 import {
   DIFFICULTY_THRESHOLD,
+  attemptConfidence,
   bandFor,
   estimateAbility,
   normalCdf,
@@ -171,5 +172,59 @@ describe("scoreAttempt", () => {
     expect(best.iq).toBeLessThanOrEqual(145);
     expect(best.low).toBeLessThan(best.iq + 1);
     expect(best.high).toBeGreaterThan(best.iq - 1);
+  });
+});
+
+describe("attemptConfidence", () => {
+  const base = { iq: 112, low: 108, high: 116, total: 25, answered: 25, noveltyRatio: 1 };
+
+  it("is high for a long, fully answered paper of fresh questions", () => {
+    const c = attemptConfidence({ ...base, standardError: 3.2 });
+    expect(c.percent).toBeGreaterThanOrEqual(72);
+    expect(c.label).toBe("high");
+    expect(c.reasons.join(" ")).toMatch(/full-length paper/i);
+  });
+
+  it("falls as the standard error widens", () => {
+    const tight = attemptConfidence({ ...base, standardError: 3 }).percent;
+    const loose = attemptConfidence({ ...base, standardError: 9 }).percent;
+    expect(loose).toBeLessThan(tight);
+  });
+
+  it("is penalised by unanswered questions", () => {
+    const full = attemptConfidence({ ...base, standardError: 4 }).percent;
+    const partial = attemptConfidence({ ...base, standardError: 4, answered: 12 }).percent;
+    expect(partial).toBeLessThan(full);
+    expect(
+      attemptConfidence({ ...base, standardError: 4, answered: 12 }).reasons.join(" "),
+    ).toMatch(/unanswered/);
+  });
+
+  it("is penalised by recycled questions", () => {
+    const fresh = attemptConfidence({ ...base, standardError: 4 }).percent;
+    const stale = attemptConfidence({ ...base, standardError: 4, noveltyRatio: 0.1 }).percent;
+    expect(stale).toBeLessThan(fresh);
+    expect(
+      attemptConfidence({ ...base, standardError: 4, noveltyRatio: 0.1 }).reasons.join(" "),
+    ).toMatch(/recall/);
+  });
+
+  it("flags a short paper", () => {
+    const c = attemptConfidence({ ...base, total: 12, answered: 12, standardError: 6 });
+    expect(c.reasons.join(" ")).toMatch(/short paper/);
+  });
+
+  it("falls back to the reported interval when no standard error was stored", () => {
+    // Attempts saved before the field existed must still get a usable figure.
+    const c = attemptConfidence({ iq: 100, low: 95, high: 105, total: 25 });
+    expect(c.margin).toBe(5);
+    expect(c.percent).toBeGreaterThan(0);
+    expect(c.percent).toBeLessThanOrEqual(100);
+  });
+
+  it("stays inside 0-100 for degenerate input", () => {
+    const c = attemptConfidence({ iq: 100, low: 100, high: 100, total: 0, standardError: 99 });
+    expect(c.percent).toBeGreaterThanOrEqual(0);
+    expect(c.percent).toBeLessThanOrEqual(100);
   });
 });
