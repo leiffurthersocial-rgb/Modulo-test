@@ -1,103 +1,67 @@
 import { ARCHETYPES, type Archetype } from "./archetypes";
+import {
+  ARCHETYPES_4,
+  ARCHETYPE_4_DEFINITIONS,
+  type Archetype4,
+} from "./archetypes4";
 import { scoreAspiration, type AspirationChoice, type AspirationItem } from "./aspiration";
-import { PILLARS, PILLAR_DEFINITIONS, type Pillar } from "./pillars";
 import type { Scenario } from "./scenarios";
 import { TRAITS, type Trait } from "./types";
 
-/**
- * Combining the three measurement modes into one picture.
- *
- * Each pillar is scored from what you say about yourself (traits), what you say
- * you would do (scenarios) and what you would not give up (forced choice). They
- * are kept separate on purpose: where they disagree is the most informative
- * part of the result.
- */
-
-/** Behaviour beats self-description, so situational choices carry more weight. */
-const SCENARIO_WEIGHT = 0.62;
-const TRAIT_WEIGHT = 0.38;
-
-function dot(a: Record<Trait, number>, b: Record<Trait, number>): number {
-  return TRAITS.reduce((sum, t) => sum + a[t] * b[t], 0);
-}
-
-function norm(a: Record<Trait, number>): number {
-  return Math.sqrt(dot(a, a));
-}
-
-function centre(values: Record<Trait, number>): Record<Trait, number> {
-  const mean = TRAITS.reduce((sum, t) => sum + values[t], 0) / TRAITS.length;
-  return TRAITS.reduce(
-    (acc, t) => {
-      acc[t] = values[t] - mean;
-      return acc;
-    },
-    {} as Record<Trait, number>,
-  );
-}
-
-/** Pillar expression implied by the trait questionnaire, 0–100 per pillar. */
-export function pillarsFromTraits(
-  traitScores: Record<Trait, number>,
-): Record<Pillar, number> {
-  let profile = centre(traitScores);
-  if (norm(profile) < 1e-6) {
-    profile = TRAITS.reduce(
-      (acc, t) => {
-        acc[t] = traitScores[t] - 50;
-        return acc;
-      },
-      {} as Record<Trait, number>,
-    );
-  }
-  const profileNorm = norm(profile);
-
-  const out = {} as Record<Pillar, number>;
-  for (const pillar of PILLARS) {
-    const vector = centre(PILLAR_DEFINITIONS[pillar].vector);
-    const magnitude = profileNorm * norm(vector);
-    const cosine = magnitude < 1e-9 ? 0 : dot(profile, vector) / magnitude;
-    out[pillar] = Math.round(((cosine + 1) / 2) * 1000) / 10;
-  }
-  return out;
-}
-
-/**
- * Map a share of choices to a 0–100 scale on which chance sits at 50.
- * With four options, picking a pillar a quarter of the time is no preference at
- * all, and a linear percentage would misleadingly call that 25.
- */
-export function shareToScore(share: number, options = 4): number {
-  const chance = 1 / options;
-  if (share <= chance) return Math.round((50 * (share / chance)) * 10) / 10;
-  return Math.round((50 + 50 * ((share - chance) / (1 - chance))) * 10) / 10;
-}
-
-export interface ScenarioTally {
-  pillars: Record<Pillar, number>;
-  /** Shadow choices, counted per pillar. */
-  inflated: Record<Pillar, number>;
-  deflated: Record<Pillar, number>;
-  mature: Record<Pillar, number>;
-  answered: number;
-  pressureAnswered: number;
-}
-
-const emptyPillarCounts = (): Record<Pillar, number> => ({
-  sovereign: 0,
+/** Zeroed counter over the four energies. */
+const zeros = (): Record<Archetype4, number> => ({
+  king: 0,
   warrior: 0,
   magician: 0,
   lover: 0,
 });
 
+/**
+ * Map a share of choices to a 0–100 access score on which chance sits at 50.
+ * With four options, choosing an energy a quarter of the time is no preference
+ * at all, and reporting that as 25 would be misleading.
+ */
+export function shareToScore(share: number, options = 4): number {
+  const chance = 1 / options;
+  if (share <= chance) return Math.round(50 * (share / chance) * 10) / 10;
+  return Math.round((50 + 50 * ((share - chance) / (1 - chance))) * 10) / 10;
+}
+
+export type ShadowPole = "active" | "passive" | "balanced";
+
+export interface ShadowReading {
+  pole: ShadowPole;
+  /** Which energy the shadow showed up in most. */
+  archetype: Archetype4 | null;
+  activeCount: number;
+  passiveCount: number;
+  matureCount: number;
+  total: number;
+  /** Share of pressure situations met in the mature form, 0–1. */
+  maturity: number;
+}
+
+export interface ScenarioTally {
+  access: Record<Archetype4, number>;
+  counts: Record<Archetype4, number>;
+  /** Sub-archetype choices, counted by facet id. */
+  facets: Record<string, number>;
+  active: Record<Archetype4, number>;
+  passive: Record<Archetype4, number>;
+  mature: Record<Archetype4, number>;
+  standingAnswered: number;
+  pressureAnswered: number;
+}
+
 export function tallyScenarios(
   choices: Readonly<Record<string, string | undefined>>,
   scenarios: readonly Scenario[],
 ): ScenarioTally {
-  const standingCounts = emptyPillarCounts();
-  const inflated = emptyPillarCounts();
-  const deflated = emptyPillarCounts();
-  const mature = emptyPillarCounts();
+  const counts = zeros();
+  const active = zeros();
+  const passive = zeros();
+  const mature = zeros();
+  const facets: Record<string, number> = {};
   let standingAnswered = 0;
   let pressureAnswered = 0;
 
@@ -108,193 +72,302 @@ export function tallyScenarios(
     if (!option) continue;
 
     if (scenario.kind === "standing") {
-      standingCounts[option.pillar] += 1;
+      counts[option.archetype] += 1;
       standingAnswered += 1;
+      if (option.facet) facets[option.facet] = (facets[option.facet] ?? 0) + 1;
     } else {
       pressureAnswered += 1;
-      if (option.mode === "inflated") inflated[option.pillar] += 1;
-      else if (option.mode === "deflated") deflated[option.pillar] += 1;
-      else mature[option.pillar] += 1;
+      if (option.mode === "active") active[option.archetype] += 1;
+      else if (option.mode === "passive") passive[option.archetype] += 1;
+      else mature[option.archetype] += 1;
     }
   }
 
-  const pillars = {} as Record<Pillar, number>;
-  for (const pillar of PILLARS) {
-    pillars[pillar] =
-      standingAnswered === 0 ? 50 : shareToScore(standingCounts[pillar] / standingAnswered);
+  const access = {} as Record<Archetype4, number>;
+  for (const id of ARCHETYPES_4) {
+    access[id] = standingAnswered === 0 ? 50 : shareToScore(counts[id] / standingAnswered);
   }
 
-  return {
-    pillars,
-    inflated,
-    deflated,
-    mature,
-    answered: standingAnswered,
-    pressureAnswered,
-  };
-}
-
-export type ShadowPole = "inflated" | "deflated" | "balanced";
-
-export interface ShadowReading {
-  pole: ShadowPole;
-  /** Which pillar the shadow showed up in most. */
-  pillar: Pillar | null;
-  inflatedCount: number;
-  deflatedCount: number;
-  matureCount: number;
-  total: number;
+  return { access, counts, facets, active, passive, mature, standingAnswered, pressureAnswered };
 }
 
 export function readShadow(tally: ScenarioTally): ShadowReading {
-  const inflatedCount = PILLARS.reduce((s, p) => s + tally.inflated[p], 0);
-  const deflatedCount = PILLARS.reduce((s, p) => s + tally.deflated[p], 0);
-  const matureCount = PILLARS.reduce((s, p) => s + tally.mature[p], 0);
-  const total = inflatedCount + deflatedCount + matureCount;
+  const activeCount = ARCHETYPES_4.reduce((s, a) => s + tally.active[a], 0);
+  const passiveCount = ARCHETYPES_4.reduce((s, a) => s + tally.passive[a], 0);
+  const matureCount = ARCHETYPES_4.reduce((s, a) => s + tally.mature[a], 0);
+  const total = activeCount + passiveCount + matureCount;
 
   const pole: ShadowPole =
-    inflatedCount === deflatedCount
-      ? "balanced"
-      : inflatedCount > deflatedCount
-        ? "inflated"
-        : "deflated";
+    activeCount === passiveCount ? "balanced" : activeCount > passiveCount ? "active" : "passive";
 
-  const source = pole === "inflated" ? tally.inflated : tally.deflated;
-  let pillar: Pillar | null = null;
+  const source = pole === "active" ? tally.active : tally.passive;
+  let archetype: Archetype4 | null = null;
   let best = 0;
-  for (const p of PILLARS) {
-    if (source[p] > best) {
-      best = source[p];
-      pillar = p;
+  for (const a of ARCHETYPES_4) {
+    if (source[a] > best) {
+      best = source[a];
+      archetype = a;
     }
   }
 
-  return { pole, pillar, inflatedCount, deflatedCount, matureCount, total };
+  return {
+    pole,
+    archetype,
+    activeCount,
+    passiveCount,
+    matureCount,
+    total,
+    maturity: total === 0 ? 0 : Math.round((matureCount / total) * 100) / 100,
+  };
 }
 
-export interface PillarReading {
-  pillar: Pillar;
-  /** Blended behavioural + self-report score, 0–100. */
-  expression: number;
-  /** From the trait questionnaire alone. */
-  fromTraits: number;
-  /** From situational choices alone. */
-  fromScenarios: number;
-  /** From forced-choice priorities: what you are aiming at. */
+/**
+ * Trait scores implied by the situations you chose.
+ *
+ * Each option carries the trait signature of its energy blended with that of
+ * its sub-archetype, so the trait layer falls out of the same answers rather
+ * than needing a separate questionnaire. That is what lets the whole
+ * assessment be short.
+ */
+export function traitsFromScenarios(
+  choices: Readonly<Record<string, string | undefined>>,
+  scenarios: readonly Scenario[],
+): Record<Trait, number> {
+  const totals = TRAITS.reduce(
+    (acc, t) => {
+      acc[t] = 0;
+      return acc;
+    },
+    {} as Record<Trait, number>,
+  );
+  let n = 0;
+
+  for (const scenario of scenarios) {
+    if (scenario.kind !== "standing") continue;
+    const chosenId = choices[scenario.id];
+    const option = scenario.options.find((o) => o.id === chosenId);
+    if (!option) continue;
+
+    const energy = ARCHETYPE_4_DEFINITIONS[option.archetype].vector;
+    const facet = option.facet
+      ? (ARCHETYPES.find((a) => a.id === option.facet)?.vector ?? null)
+      : null;
+
+    for (const t of TRAITS) {
+      totals[t] += facet ? 0.5 * energy[t] + 0.5 * facet[t] : energy[t];
+    }
+    n += 1;
+  }
+
+  const out = {} as Record<Trait, number>;
+  for (const t of TRAITS) {
+    // Weights live in roughly −1…1; map the mean onto the 0–100 trait scale.
+    const mean = n === 0 ? 0 : totals[t] / n;
+    out[t] = Math.round(Math.min(100, Math.max(0, ((mean + 1) / 2) * 100)) * 10) / 10;
+  }
+  return out;
+}
+
+export interface ArchetypeReading {
+  archetype: Archetype4;
+  /** How often you reach for this energy, 0–100 with chance at 50. */
+  access: number;
+  /** Raw number of situations in which you chose it. */
+  chosen: number;
+  /** What you said you would not give up, 0–100. */
   aspiration: number;
-  /** aspiration − expression. Positive means you value it more than you live it. */
+  /** aspiration − access. Positive means you value it more than you use it. */
   gap: number;
 }
 
-export interface FourPillarProfile {
-  readings: PillarReading[];
-  byPillar: Record<Pillar, PillarReading>;
-  /** Strongest current expression. */
-  primary: Pillar;
-  /** Second strongest. */
-  supporting: Pillar;
-  /** Weakest current expression. */
-  leastDeveloped: Pillar;
-  /** Largest positive gap between what you value and what you express. */
-  growthEdge: Pillar;
-  growthGap: number;
-  shadow: ShadowReading;
-  /** How much self-description and situational choice disagree, in points. */
-  selfReportDivergence: number;
-  divergentPillar: Pillar | null;
-  /** Spread of expression across the four pillars. */
-  balance: number;
-  /**
-   * Points between the leading pillar and the next. A stable sort over a fixed
-   * pillar order would otherwise resolve every tie to the same pillar and
-   * present it as a finding, so a small margin is reported rather than hidden.
-   */
-  primaryMargin: number;
-  /** True when the top two pillars are close enough to be effectively level. */
-  primaryContested: boolean;
+export interface Confidence {
+  /** 0–100. How much the answers actually pin the reading down. */
+  percent: number;
+  label: "low" | "moderate" | "good" | "high";
+  /** Plus-or-minus band on the leading access score, in points. */
+  margin: number;
+  low: number;
+  high: number;
+  reasons: string[];
 }
 
-export function buildFourPillarProfile(input: {
+/**
+ * How much to trust the reading.
+ *
+ * Three things move it: how many situations were answered (more choices, less
+ * noise), how concentrated the choices were (a man who spreads evenly across
+ * all four has genuinely not revealed a dominant energy), and how far the
+ * leading energy is clear of the next. The band is the binomial standard error
+ * on the leading share, carried through the same share-to-score mapping, so it
+ * widens honestly on a short form.
+ */
+export function computeConfidence(tally: ScenarioTally, margin: number): Confidence {
+  const n = tally.standingAnswered;
+  const reasons: string[] = [];
+
+  if (n === 0) {
+    return {
+      percent: 0,
+      label: "low",
+      margin: 50,
+      low: 0,
+      high: 100,
+      reasons: ["No situations were answered."],
+    };
+  }
+
+  const counts = ARCHETYPES_4.map((a) => tally.counts[a]);
+  const top = Math.max(...counts);
+  const share = top / n;
+
+  // Normalised entropy: 1 when the four are chosen equally, 0 when one is
+  // chosen every time. Low spread means a clearer reading.
+  let entropy = 0;
+  for (const count of counts) {
+    if (count === 0) continue;
+    const p = count / n;
+    entropy -= p * Math.log(p);
+  }
+  const normalisedEntropy = entropy / Math.log(4);
+  const concentration = 1 - normalisedEntropy;
+
+  const lengthFactor = n / (n + 6);
+  const marginFactor = Math.min(1, margin / 25);
+  const percent = Math.round(
+    100 * (0.45 * lengthFactor + 0.35 * Math.min(1, concentration * 1.6) + 0.2 * marginFactor),
+  );
+
+  // Wilson score interval rather than the normal (Wald) approximation. Wald
+  // collapses to zero width when every choice went the same way, which would
+  // report a perfectly concentrated set of answers as having no uncertainty at
+  // all — exactly backwards on a short form. Wilson stays sensible at the
+  // boundaries, which is why it is the standard recommendation for proportions.
+  const z = 1; // ≈68% interval, matching how the band is described.
+  const denominator = 1 + (z * z) / n;
+  const centre = (share + (z * z) / (2 * n)) / denominator;
+  const halfWidth =
+    (z / denominator) * Math.sqrt((share * (1 - share)) / n + (z * z) / (4 * n * n));
+
+  const lowShare = Math.max(0, centre - halfWidth);
+  const highShare = Math.min(1, centre + halfWidth);
+  const leadScore = shareToScore(share);
+  const lowScore = shareToScore(lowShare);
+  const highScore = shareToScore(highShare);
+  const band = Math.round(((highScore - lowScore) / 2) * 10) / 10;
+  const label: Confidence["label"] =
+    percent >= 75 ? "high" : percent >= 55 ? "good" : percent >= 35 ? "moderate" : "low";
+
+  if (n < 14) reasons.push(`Only ${n} situations answered — the shorter form carries a wider band.`);
+  if (concentration < 0.12)
+    reasons.push("Your choices were spread almost evenly across the four, so no energy stands out.");
+  if (margin < 8) reasons.push("The leading two energies are close together.");
+  if (reasons.length === 0) reasons.push("Enough answers, clearly concentrated, with a decisive lead.");
+
+  return {
+    percent,
+    label,
+    margin: band,
+    low: Math.max(0, Math.round(lowScore * 10) / 10),
+    high: Math.min(100, Math.round(highScore * 10) / 10),
+    reasons,
+  };
+}
+
+export interface FourArchetypeProfile {
+  readings: ArchetypeReading[];
+  byArchetype: Record<Archetype4, ArchetypeReading>;
+  /** Most accessed energy. Never "your type" — see NOT_A_TYPE_NOTE. */
+  dominant: Archetype4;
+  supporting: Archetype4;
+  /** Least accessed: the one worth developing. */
+  neglected: Archetype4;
+  /** Largest positive gap between what you value and what you reach for. */
+  growthEdge: Archetype4;
+  growthGap: number;
+  shadow: ShadowReading;
+  /** Points between the leading energy and the next. */
+  dominantMargin: number;
+  contested: boolean;
+  /** Spread across the four: low means well balanced. */
+  spread: number;
+  balanceLabel: "balanced" | "tilted" | "concentrated";
+  confidence: Confidence;
   traitScores: Record<Trait, number>;
+  facets: Record<string, number>;
+  answered: number;
+  total: number;
+}
+
+export function buildFourArchetypeProfile(input: {
   scenarioChoices: Readonly<Record<string, string | undefined>>;
   scenarios: readonly Scenario[];
   aspirationChoices: Readonly<Record<string, AspirationChoice | undefined>>;
   aspirationItems: readonly AspirationItem[];
-}): FourPillarProfile {
-  const fromTraits = pillarsFromTraits(input.traitScores);
+}): FourArchetypeProfile {
   const tally = tallyScenarios(input.scenarioChoices, input.scenarios);
   const aspiration = scoreAspiration(input.aspirationChoices, input.aspirationItems);
 
-  const readings: PillarReading[] = PILLARS.map((pillar) => {
-    const expression =
-      Math.round(
-        (SCENARIO_WEIGHT * tally.pillars[pillar] + TRAIT_WEIGHT * fromTraits[pillar]) * 10,
-      ) / 10;
-    return {
-      pillar,
-      expression,
-      fromTraits: fromTraits[pillar],
-      fromScenarios: tally.pillars[pillar],
-      aspiration: aspiration[pillar],
-      gap: Math.round((aspiration[pillar] - expression) * 10) / 10,
-    };
-  });
+  const readings: ArchetypeReading[] = ARCHETYPES_4.map((archetype) => ({
+    archetype,
+    access: tally.access[archetype],
+    chosen: tally.counts[archetype],
+    aspiration: aspiration[archetype],
+    gap: Math.round((aspiration[archetype] - tally.access[archetype]) * 10) / 10,
+  }));
 
-  const byPillar = readings.reduce(
+  const byArchetype = readings.reduce(
     (acc, r) => {
-      acc[r.pillar] = r;
+      acc[r.archetype] = r;
       return acc;
     },
-    {} as Record<Pillar, PillarReading>,
+    {} as Record<Archetype4, ArchetypeReading>,
   );
 
-  const byExpression = [...readings].sort((a, b) => b.expression - a.expression);
+  const byAccess = [...readings].sort((a, b) => b.access - a.access);
   const byGap = [...readings].sort((a, b) => b.gap - a.gap);
 
-  // Where saying and doing diverge most.
-  let divergentPillar: Pillar | null = null;
-  let selfReportDivergence = 0;
-  for (const reading of readings) {
-    const delta = Math.abs(reading.fromScenarios - reading.fromTraits);
-    if (delta > selfReportDivergence) {
-      selfReportDivergence = delta;
-      divergentPillar = reading.pillar;
-    }
-  }
+  const dominantMargin =
+    Math.round(((byAccess[0] as ArchetypeReading).access - (byAccess[1] as ArchetypeReading).access) * 10) / 10;
 
-  const expressions = readings.map((r) => r.expression);
-  const primaryMargin =
-    Math.round(
-      ((byExpression[0] as PillarReading).expression -
-        (byExpression[1] as PillarReading).expression) *
-        10,
-    ) / 10;
+  const accessValues = readings.map((r) => r.access);
+  const spread = Math.round((Math.max(...accessValues) - Math.min(...accessValues)) * 10) / 10;
 
   return {
     readings,
-    byPillar,
-    primary: (byExpression[0] as PillarReading).pillar,
-    supporting: (byExpression[1] as PillarReading).pillar,
-    leastDeveloped: (byExpression[byExpression.length - 1] as PillarReading).pillar,
-    growthEdge: (byGap[0] as PillarReading).pillar,
-    growthGap: (byGap[0] as PillarReading).gap,
+    byArchetype,
+    dominant: (byAccess[0] as ArchetypeReading).archetype,
+    supporting: (byAccess[1] as ArchetypeReading).archetype,
+    neglected: (byAccess[byAccess.length - 1] as ArchetypeReading).archetype,
+    growthEdge: (byGap[0] as ArchetypeReading).archetype,
+    growthGap: (byGap[0] as ArchetypeReading).gap,
     shadow: readShadow(tally),
-    selfReportDivergence: Math.round(selfReportDivergence * 10) / 10,
-    divergentPillar,
-    balance: Math.round((Math.max(...expressions) - Math.min(...expressions)) * 10) / 10,
-    primaryMargin,
-    primaryContested: primaryMargin < 4,
+    dominantMargin,
+    contested: dominantMargin < 8,
+    spread,
+    balanceLabel: spread < 25 ? "balanced" : spread < 55 ? "tilted" : "concentrated",
+    confidence: computeConfidence(tally, dominantMargin),
+    traitScores: traitsFromScenarios(input.scenarioChoices, input.scenarios),
+    facets: tally.facets,
+    answered: tally.standingAnswered + tally.pressureAnswered,
+    total: input.scenarios.length,
   };
 }
 
-/** The best-fitting sub-archetype inside a pillar, from the trait profile. */
-export function subArchetypeFor(
-  pillar: Pillar,
-  ranking: readonly { archetype: Archetype; match: number }[],
-): { archetype: Archetype; match: number } | null {
-  const ids = PILLAR_DEFINITIONS[pillar].archetypes;
-  const withinPillar = ranking.filter((r) => ids.includes(r.archetype.id));
-  if (withinPillar.length > 0) return withinPillar[0] as { archetype: Archetype; match: number };
-  const fallback = ARCHETYPES.find((a) => ids.includes(a.id));
-  return fallback ? { archetype: fallback, match: 50 } : null;
+/** Which of the dominant energy's three sub-archetypes you actually expressed. */
+export function facetFor(
+  archetype: Archetype4,
+  facets: Record<string, number>,
+): { archetype: Archetype; count: number } | null {
+  const ids = ARCHETYPE_4_DEFINITIONS[archetype].facets;
+  let bestId: string | null = null;
+  let best = -1;
+  for (const id of ids) {
+    const count = facets[id] ?? 0;
+    if (count > best) {
+      best = count;
+      bestId = id;
+    }
+  }
+  const found = ARCHETYPES.find((a) => a.id === bestId);
+  return found ? { archetype: found, count: Math.max(0, best) } : null;
 }

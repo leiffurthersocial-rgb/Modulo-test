@@ -8,6 +8,10 @@ import { stableCategoryScores, stableEstimate, type AttemptSummary } from "@/lib
 import { CATEGORY_LABELS, type Category } from "@/lib/iq/types";
 import { ARCHETYPES } from "@/lib/personality/archetypes";
 import {
+  ARCHETYPE_4_DEFINITIONS,
+  type Archetype4,
+} from "@/lib/personality/archetypes4";
+import {
   clearEverything,
   clearIqHistory,
   clearPersonalityHistory,
@@ -240,18 +244,54 @@ export function HistoryView() {
           </div>
           <ul className="mt-5 space-y-3">
             {personality.map((result) => {
-              const primary = ARCHETYPES.find((a) => a.id === result.primaryId);
-              const secondary = ARCHETYPES.find((a) => a.id === result.secondaryId);
+              const dominant = result.dominant
+                ? ARCHETYPE_4_DEFINITIONS[result.dominant as Archetype4]
+                : null;
+              const facet = ARCHETYPES.find((a) => a.id === result.primaryId);
+              const supporting = result.secondaryId
+                ? (ARCHETYPE_4_DEFINITIONS[result.secondaryId as Archetype4] ??
+                   ARCHETYPES.find((a) => a.id === result.secondaryId))
+                : null;
+              const confidence = result.confidencePercent;
+              const margin = result.confidenceMargin ?? 0;
+              const tone =
+                confidence === undefined
+                  ? "border-ink-600 text-fog-400"
+                  : confidence >= 75
+                    ? "border-jade-500/40 bg-jade-500/10 text-jade-400"
+                    : confidence >= 55
+                      ? "border-jade-500/30 bg-jade-500/5 text-jade-400"
+                      : confidence >= 35
+                        ? "border-sand-500/40 bg-sand-500/10 text-sand-400"
+                        : "border-red-900/60 bg-red-950/25 text-red-300";
               return (
                 <li key={result.id}>
                   <Card className="p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[17px] font-semibold tracking-tight text-fog-100">
-                          {primary?.name ?? "Unknown archetype"}
-                        </p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-[17px] font-semibold tracking-tight text-fog-100">
+                            {dominant?.name ?? facet?.name ?? "Unknown"}
+                          </p>
+                          {confidence !== undefined ? (
+                            <span
+                              className={`tabular inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] ${tone}`}
+                              title={`Approximate range on the leading score: ±${Math.round(margin)} points`}
+                            >
+                              {confidence}% confidence
+                              <span className="opacity-70">±{Math.round(margin)}</span>
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="mt-1 text-[13px] text-fog-300">
-                          Secondary: {secondary?.name ?? "—"} · {result.primaryMatch}% primary fit
+                          {facet && dominant ? `${facet.name} · ` : ""}
+                          {supporting ? `supported by ${supporting.name}` : ""}
+                          {result.primaryMatch !== undefined
+                            ? ` · access ${Math.round(result.primaryMatch)} (${Math.max(
+                                0,
+                                Math.round(result.primaryMatch - margin),
+                              )}–${Math.min(100, Math.round(result.primaryMatch + margin))})`
+                            : ""}
                         </p>
                         <p className="tabular mt-1 text-[12px] text-fog-400">
                           {dateFormat.format(new Date(result.completedAt))} · {result.answered}/{result.total} answered

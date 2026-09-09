@@ -1,8 +1,12 @@
 import { ARCHETYPES, type Archetype } from "./archetypes";
 import type { AspirationChoice, AspirationItem } from "./aspiration";
 import { ASPIRATION_ITEMS } from "./aspiration";
-import type { Pillar } from "./pillars";
-import { buildFourPillarProfile, subArchetypeFor, type FourPillarProfile } from "./profile";
+import type { Archetype4 } from "./archetypes4";
+import {
+  buildFourArchetypeProfile,
+  facetFor,
+  type FourArchetypeProfile,
+} from "./profile";
 import { SCENARIOS, type Scenario } from "./scenarios";
 import { CORE_ITEMS_PER_TRAIT, ITEMS_PER_TRAIT, PERSONALITY_ITEMS } from "./items";
 import { assessQuality, type ResponseQuality } from "./quality";
@@ -62,10 +66,10 @@ export interface PersonalityOutcome {
   quality: ResponseQuality;
   answered: number;
   total: number;
-  /** Present when situational and forced-choice sections were also completed. */
-  pillars: FourPillarProfile | null;
-  /** Best-fitting sub-archetype inside the dominant pillar. */
-  pillarArchetype: { archetype: Archetype; match: number } | null;
+  /** Present when situational and forced-choice sections were completed. */
+  four: FourArchetypeProfile | null;
+  /** Which sub-archetype of the dominant energy you actually expressed. */
+  facet: { archetype: Archetype; count: number } | null;
 }
 
 export function keyedValue(item: PersonalityItem, value: LikertValue): number {
@@ -276,9 +280,8 @@ export function scorePersonality(
 
   const hasSituational =
     options.scenarioChoices !== undefined && options.aspirationChoices !== undefined;
-  const pillars = hasSituational
-    ? buildFourPillarProfile({
-        traitScores,
+  const four = hasSituational
+    ? buildFourArchetypeProfile({
         scenarioChoices: options.scenarioChoices ?? {},
         scenarios: options.scenarios ?? SCENARIOS,
         aspirationChoices: options.aspirationChoices ?? {},
@@ -286,10 +289,9 @@ export function scorePersonality(
       })
     : null;
 
-  // Inside the dominant pillar, the trait profile decides which of its three
-  // sub-archetypes fits — the pillar says what you are for, the sub-archetype
-  // says how you go about it.
-  const pillarArchetype = pillars ? subArchetypeFor(pillars.primary, ranking) : null;
+  // The energy says what you reach for; the sub-archetype says which flavour of
+  // it you actually chose across the situations.
+  const facet = four ? facetFor(four.dominant, four.facets) : null;
 
   return {
     traits,
@@ -305,12 +307,43 @@ export function scorePersonality(
     quality,
     answered: items.filter((i) => responses[i.id] !== undefined).length,
     total: items.length,
-    pillars,
-    pillarArchetype,
+    four,
+    facet,
   };
 }
 
-export type { Pillar };
+export type { Archetype4 };
 
 export const FULL_ITEM_COUNT = TRAITS.length * ITEMS_PER_TRAIT;
 export const SHORT_ITEM_COUNT = TRAITS.length * CORE_ITEMS_PER_TRAIT;
+
+/**
+ * Score an assessment made entirely of situations and priorities.
+ *
+ * The trait layer is derived from the same answers rather than asked for
+ * separately, which is what keeps the assessment short without losing the
+ * per-trait read.
+ */
+export function scoreFourArchetypes(input: {
+  scenarioChoices: Readonly<Record<string, string | undefined>>;
+  scenarios: readonly Scenario[];
+  aspirationChoices: Readonly<Record<string, AspirationChoice | undefined>>;
+  aspirationItems: readonly AspirationItem[];
+}) {
+  const four = buildFourArchetypeProfile(input);
+  const ranking = matchArchetypes(four.traitScores);
+  const facet = facetFor(four.dominant, four.facets);
+  const mean =
+    TRAITS.reduce((sum, t) => sum + four.traitScores[t], 0) / TRAITS.length;
+  const ordered = [...TRAITS].sort((a, b) => four.traitScores[b] - four.traitScores[a]);
+
+  return {
+    four,
+    facet,
+    ranking,
+    traitScores: four.traitScores,
+    definingTraits: ordered.filter((t) => four.traitScores[t] > mean).slice(0, 3),
+    counterTraits: ordered.filter((t) => four.traitScores[t] < mean).slice(-2).reverse(),
+    combinations: findCombinations(four.traitScores),
+  };
+}

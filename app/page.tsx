@@ -5,9 +5,8 @@ import { QUESTION_BANK } from "@/lib/iq/bank";
 import { TESTS } from "@/lib/iq/tests";
 import { CATEGORIES, CATEGORY_BLURBS, CATEGORY_LABELS } from "@/lib/iq/types";
 import { ARCHETYPES } from "@/lib/personality/archetypes";
-import { PERSONALITY_ITEMS } from "@/lib/personality/items";
 import { ASPIRATION_ITEMS } from "@/lib/personality/aspiration";
-import { PILLAR_LIST } from "@/lib/personality/pillars";
+import { ARCHETYPE_4_LIST, NOT_A_TYPE_NOTE } from "@/lib/personality/archetypes4";
 import { SCENARIOS } from "@/lib/personality/scenarios";
 import { TRAITS, TRAIT_LABELS } from "@/lib/personality/types";
 
@@ -38,9 +37,9 @@ export default function HomePage() {
             <span className="text-fog-300"> not how fast you guess.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-fog-300 sm:text-[17px]">
-            Modulo: Test is a set of {TESTS.length} reasoning assessments and a{" "}
-            {PERSONALITY_ITEMS.length}-item trait profile. Questions are drawn at random from a bank
-            of {QUESTION_BANK.length}, scored with a transparent ability model, and combined across
+            Modulo: Test is {TESTS.length} reasoning assessments plus the King / Warrior /
+            Magician / Lover archetype assessment. IQ questions are drawn at random from a bank of{" "}
+            {QUESTION_BANK.length}, scored with a transparent ability model and combined across
             attempts so the estimate settles rather than inflates.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -108,16 +107,15 @@ export default function HomePage() {
         <div className="panel overflow-hidden rounded-3xl">
           <div className="grid gap-10 p-7 sm:p-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
             <div>
-              <Eyebrow>Personality</Eyebrow>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Four pillars. Twelve sub-archetypes.</h2>
+              <Eyebrow>King · Warrior · Magician · Lover</Eyebrow>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">The four archetypes</h2>
               <p className="mt-4 text-[14.5px] leading-relaxed text-fog-300">
-                Three sections measuring three different things: {PERSONALITY_ITEMS.length}{" "}
-                statements for how you see yourself, {SCENARIOS.length} situations with four
-                defensible answers each for what you would actually do, and{" "}
-                {ASPIRATION_ITEMS.length} forced choices between equally creditable things for what
-                you would refuse to give up. You get a dominant pillar, its sub-archetype, the
-                shadow you fall into under pressure, and — where what you value outruns how you act
-                — the gap that is worth closing.
+                {NOT_A_TYPE_NOTE} Built on {SCENARIOS.length} situations with four defensible
+                answers each and {ASPIRATION_ITEMS.length} forced choices between equally
+                creditable things — about six minutes for the core form. You get access across all
+                four with a confidence range, what each energy desires and fears, which
+                sub-archetype you express, the shadow you fall into under pressure, and the gap
+                between what you value and what you reach for.
               </p>
               <div className="mt-6 flex flex-wrap gap-1.5">
                 {TRAITS.map((trait) => (
@@ -127,31 +125,30 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="mt-8">
-                <ButtonLink href="/personality" variant="secondary" size="lg">Take the personality test</ButtonLink>
+                <ButtonLink href="/personality" variant="secondary" size="lg">Take the archetype assessment</ButtonLink>
               </div>
               <p className="mt-6 text-[12px] leading-relaxed text-fog-400">
                 Modulo archetypes are created by Modulo. They are a readable summary of your trait
-                profile — not a scientifically established personality typology. The four-pillar
-                structure follows the King / Warrior / Magician / Lover model (Moore &amp;
-                Gillette, 1990); the content and scoring are ours.
+                King, Warrior, Magician, Lover is Moore &amp; Gillette&rsquo;s model of the mature
+                masculine (1990). It is not a personality typology and this is not a validated
+                instrument; the sub-archetypes, situations and scoring are Modulo&rsquo;s own.
               </p>
             </div>
             <ul className="space-y-2.5 self-start">
-              {PILLAR_LIST.map((pillar) => (
-                <li key={pillar.id} className="rounded-xl border border-ink-800 bg-ink-950/40 p-4">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-[14px] font-medium tracking-tight text-fog-100">
-                      {pillar.name}
-                    </p>
-                    <p className="text-[11px] text-fog-400">{pillar.classical}</p>
-                  </div>
-                  <p className="mt-1 text-[11.5px] leading-snug text-fog-400">{pillar.tagline}</p>
+              {ARCHETYPE_4_LIST.map((archetype) => (
+                <li key={archetype.id} className="rounded-xl border border-ink-800 bg-ink-950/40 p-4">
+                  <p className="text-[14px] font-medium tracking-tight text-fog-100">
+                    {archetype.name}
+                  </p>
+                  <p className="mt-1 text-[11.5px] leading-snug text-fog-400">
+                    {archetype.tagline}
+                  </p>
                   <p className="mt-2 text-[11px] leading-snug text-fog-400">
-                    <span className="text-fog-300">Shadows:</span>{" "}
-                    {pillar.shadow.inflated.name} · {pillar.shadow.deflated.name}
+                    <span className="text-fog-300">Shadows:</span> {archetype.shadow.active.name} ·{" "}
+                    {archetype.shadow.passive.name}
                   </p>
                   <p className="mt-1.5 text-[11px] leading-snug text-fog-400">
-                    {pillar.archetypes
+                    {archetype.facets
                       .map((id) => ARCHETYPES.find((a) => a.id === id)?.name ?? id)
                       .join(" · ")}
                   </p>

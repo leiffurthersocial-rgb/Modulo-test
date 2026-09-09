@@ -4,9 +4,6 @@ import { Disclaimer, Eyebrow } from "@/components/ui";
 import { QUESTION_BANK } from "@/lib/iq/bank";
 import { DIFFICULTY_THRESHOLD } from "@/lib/iq/scoring";
 import { TESTS } from "@/lib/iq/tests";
-import { ARCHETYPES } from "@/lib/personality/archetypes";
-import { PERSONALITY_ITEMS } from "@/lib/personality/items";
-import { SHORT_ITEM_COUNT } from "@/lib/personality/scoring";
 
 export const metadata: Metadata = { title: "Method" };
 
@@ -35,13 +32,27 @@ const SECTIONS = [
     ],
   },
   {
-    heading: "How the archetypes are derived",
+    heading: "The archetype assessment is not a personality test",
     body: [
-      `The personality assessment is ${PERSONALITY_ITEMS.length} statements rated from one to five — eight per trait, of which exactly four are reverse-worded. That balance matters: acquiescence bias, the tendency to agree with whatever is put in front of you, cancels exactly when a trait has as many reversed items as forward ones, and only approximately when it does not. A balanced ${SHORT_ITEM_COUNT}-item short form is also offered.`,
-      "Statements are interleaved rather than grouped, so consecutive questions never measure the same trait. A run of five leadership items in a row invites you to answer the theme rather than the statement.",
-      `Trait scores are centred on your own average, so what counts is the shape of the profile — which traits stand out relative to your others — not how strongly you agreed overall. Archetype vectors are centred the same way, which stops archetypes built mostly from positive weights matching everyone slightly better. That shape is compared against ${ARCHETYPES.length} archetypes by cosine similarity.`,
-      "The secondary archetype is not simply the runner-up. Several archetypes describe substantially the same person — The Scholar and The Craftsman correlate at 0.87 — so reporting the runner-up would often tell you nothing new. Modulo instead reports the highest-ranked archetype whose shape genuinely differs from the primary.",
-      "Because the comparison uses all nine traits at once, no single answer can decide the outcome.",
+      "King, Warrior, Magician, Lover is Robert Moore and Douglas Gillette's model of the mature masculine (1990), drawn from Jungian archetype theory. It is not a typology. You are not \u201ca Warrior\u201d the way you might be an INTJ \u2014 every man has all four energies, and the questions worth asking are how much access you have to each, whether they are in balance, and whether you meet them in their mature form or in one of their two shadows.",
+      "So the result never names a type. It reports access across all four, the spread between them, which sub-archetype of the leading energy you actually expressed, which shadow you fall into under pressure, and the gap between what you say you value and what you reach for.",
+      "Each archetype also has a bipolar shadow \u2014 an active, inflated pole and a passive, deflated one \u2014 and an immature 'boy psychology' precursor it matures out of. The Tyrant and the Weakling for the King; the Sadist and the Masochist for the Warrior; the Manipulator and the Denying Innocent One for the Magician; the Addicted and the Impotent Lover. Those are Moore and Gillette's terms. Leaving them out would turn the model into a horoscope, because the shadows are where most men actually live.",
+    ],
+  },
+  {
+    heading: "Why it is built from situations rather than statements",
+    body: [
+      "A statement like \u201cI take charge when a group has no direction\u201d announces exactly what it measures, so a questionnaire built from statements records self-image as much as behaviour \u2014 and it takes a great many of them to get a stable reading.",
+      "Situations do not announce themselves. Each offers four responses a reasonable man might all choose, so picking one reveals disposition rather than aspiration. And because exactly one option can be chosen, the format is ipsative: you cannot claim all four energies at once, the way you can agree with every statement on a rating scale. That property is what makes a short assessment workable \u2014 eighteen forced choices carry more information than a hundred ratings, which is why the core form takes about six minutes.",
+      "Each option also carries a sub-archetype, so reaching for the King repeatedly reveals not just King but which kind. Every sub-archetype is offered exactly eight times across the situations, so none can win on availability rather than on your choices. The trait signature is derived from the same answers rather than asked for separately.",
+      "Several situations describe things going wrong, and their options map to the two shadow poles. Nobody selects an option labelled as a flaw, so each is written to sound reasonable from the inside, which is how shadows actually operate.",
+    ],
+  },
+  {
+    heading: "The confidence figure",
+    body: [
+      "Three things move it. How many situations you answered \u2014 more choices, less noise. How concentrated your choices were \u2014 a man who spreads evenly across all four has genuinely not revealed a dominant energy, and saying otherwise would be inventing a finding. And how far the leading energy is clear of the next.",
+      "The range beside it is the binomial standard error on the leading share, carried through the same mapping used for the score itself. It widens honestly on the shorter form, which is the trade you make by taking six minutes instead of eleven.",
     ],
   },
 ];

@@ -77,39 +77,51 @@ prompt + stimulus + options. The generated visual items are deduplicated at buil
 the same reason: a repeat served as if it were new would quietly corrupt the novelty
 weighting.
 
-### The four-pillar model
+### The King / Warrior / Magician / Lover assessment
 
-The structure — four domains of character, each with an inflated and a deflated shadow —
-follows the King / Warrior / Magician / Lover framework (Moore & Gillette, 1990), drawn
-from Jungian archetype theory. The content, sub-archetypes, scenarios and scoring are
-Modulo's own. The twelve archetypes map three-per-pillar: Sovereign (Leader, Guardian,
-Strategist), Warrior (Competitor, Maverick, Builder), Magician (Scholar, Craftsman,
-Explorer), Lover (Diplomat, Advocate, Catalyst).
+Robert Moore and Douglas Gillette's model of the mature masculine (1990), from Jungian
+archetype theory. Two properties of the model shape the whole implementation:
 
-Each pillar is measured three ways, and the disagreements between them are the output:
+**It is not a personality typology.** You are not "a Warrior" the way you might be an INTJ.
+Every man has all four energies, so the result never names a type — it reports *access*
+across all four, the spread between them, which shadow you fall into, and the gap between
+what you value and what you reach for.
 
-| Mode | Question it answers | Items |
+**Each archetype has a bipolar shadow** — an active/inflated and a passive/deflated pole —
+plus an immature "boy psychology" precursor. Tyrant/Weakling (King), Sadist/Masochist
+(Warrior), Manipulator/Denying Innocent One (Magician), Addicted/Impotent Lover. Those are
+Moore and Gillette's terms; omitting them would make the model a horoscope, since the
+shadows are where most men actually live.
+
+Each archetype carries what it **desires**, what it **fears**, its function, how it shows
+up at work and in relationships, what is missing without it, both shadows with their tells,
+its immature form, and concrete development practices.
+
+#### Built from situations, not statements
+
+| Form | Items | Time |
 | --- | --- | --- |
-| Statements (Likert) | How you describe yourself | 72 |
-| Situations (SJT) | What you'd actually do | 20 |
-| Priorities (forced choice) | What you'd refuse to give up | 12 |
+| Core | 18 situations + 8 priorities | ~6 min |
+| Deep | 34 situations + 12 priorities | ~11 min |
 
-A statement announces what it measures, so it records self-image as much as behaviour.
-Situations give four responses a reasonable person might all choose, so picking one reveals
-disposition — and because only one can be picked, you can't claim all four pillars the way
-you can agree with every statement. Priorities pit two equally creditable things against
-each other, so the choice can't be explained by wanting to look good. Situational answers
-are weighted above statements (0.62 / 0.38); where the two disagree by more than 18 points,
-the result says so — that's usually a trait that's part of your self-image but not yet your
-default move.
+A statement announces what it measures, so it records self-image — and needs a great many
+items for a stable reading. A situation with four defensible answers does not, and because
+exactly one can be chosen the format is ipsative: you can't claim all four energies the way
+you can agree with every statement. That's what makes a six-minute assessment workable.
 
-Six of the situations describe things going wrong, and their options map to the two shadow
-poles. Nobody picks an option labelled as a flaw, so each is written to sound reasonable
-from the inside — which is how shadows operate.
+Each option also carries a sub-archetype, so reaching for the King repeatedly reveals *which
+kind*. Every sub-archetype is offered exactly eight times, enforced by test, so none wins on
+availability. The trait signature is derived from the same answers rather than asked for
+separately.
 
-**Aspiration minus expression** is the headline output: the pillar you value most above how
-you currently act, with concrete practices for it. Every pillar appears an equal number of
-times in the forced-choice pairs, which a test enforces.
+#### Confidence
+
+Reported as a percentage with an approximate range, on the result page and in history. Three
+inputs: how many situations were answered, how concentrated the choices were (spreading
+evenly across four genuinely reveals no dominant energy), and the margin over the runner-up.
+The range is a **Wilson score interval** — the normal approximation collapses to ±0 when
+every choice goes the same way, reporting a short perfectly-consistent form as having no
+uncertainty, which is exactly backwards.
 
 ### The trait layer
 

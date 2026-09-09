@@ -1,5 +1,4 @@
-import type { Pillar } from "./pillars";
-import { PILLARS } from "./pillars";
+import { ARCHETYPES_4, type Archetype4 } from "./archetypes4";
 
 /**
  * What you would refuse to give up.
@@ -21,8 +20,8 @@ export interface AspirationItem {
   id: string;
   frame: "want" | "fear";
   prompt: string;
-  left: { text: string; pillar: Pillar };
-  right: { text: string; pillar: Pillar };
+  left: { text: string; pillar: Archetype4 };
+  right: { text: string; pillar: Archetype4 };
   core: boolean;
 }
 
@@ -35,7 +34,7 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
     frame: "want",
     core: true,
     prompt: WANT,
-    left: { text: "Being the person others rely on when it matters", pillar: "sovereign" },
+    left: { text: "Being the person others rely on when it matters", pillar: "king" },
     right: { text: "Being the person who understands it properly", pillar: "magician" },
   },
   {
@@ -51,7 +50,7 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
     frame: "want",
     core: true,
     prompt: WANT,
-    left: { text: "Leaving things better ordered than you found them", pillar: "sovereign" },
+    left: { text: "Leaving things better ordered than you found them", pillar: "king" },
     right: { text: "Doing the difficult thing when it costs you", pillar: "warrior" },
   },
   {
@@ -67,7 +66,7 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
     frame: "want",
     core: true,
     prompt: WANT,
-    left: { text: "Being trusted with responsibility for others", pillar: "sovereign" },
+    left: { text: "Being trusted with responsibility for others", pillar: "king" },
     right: { text: "Having a life that actually feels like yours", pillar: "lover" },
   },
   {
@@ -81,15 +80,15 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
   {
     id: "as-07",
     frame: "fear",
-    core: false,
+    core: true,
     prompt: FEAR,
-    left: { text: "Having let down people who were counting on you", pillar: "sovereign" },
+    left: { text: "Having let down people who were counting on you", pillar: "king" },
     right: { text: "Never having understood the thing you spent your life on", pillar: "magician" },
   },
   {
     id: "as-08",
     frame: "fear",
-    core: false,
+    core: true,
     prompt: FEAR,
     left: { text: "Having backed down every time it mattered", pillar: "warrior" },
     right: { text: "Having been physically present and never really there", pillar: "lover" },
@@ -99,7 +98,7 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
     frame: "fear",
     core: false,
     prompt: FEAR,
-    left: { text: "Having left a mess for others to sort out", pillar: "sovereign" },
+    left: { text: "Having left a mess for others to sort out", pillar: "king" },
     right: { text: "Having avoided every fight worth having", pillar: "warrior" },
   },
   {
@@ -115,7 +114,7 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
     frame: "fear",
     core: false,
     prompt: FEAR,
-    left: { text: "Having had authority and used it badly", pillar: "sovereign" },
+    left: { text: "Having had authority and used it badly", pillar: "king" },
     right: { text: "Having lived carefully and enjoyed none of it", pillar: "lover" },
   },
   {
@@ -130,8 +129,8 @@ export const ASPIRATION_ITEMS: AspirationItem[] = [
 
 export const CORE_ASPIRATION_ITEMS = ASPIRATION_ITEMS.filter((i) => i.core);
 
-export function aspirationForForm(form: "short" | "full"): AspirationItem[] {
-  return form === "short" ? CORE_ASPIRATION_ITEMS : ASPIRATION_ITEMS;
+export function aspirationForForm(form: "core" | "deep"): AspirationItem[] {
+  return form === "core" ? CORE_ASPIRATION_ITEMS : ASPIRATION_ITEMS;
 }
 
 /** Which side of each pair was chosen: "left" or "right". */
@@ -144,9 +143,9 @@ export type AspirationChoice = "left" | "right";
 export function scoreAspiration(
   choices: Readonly<Record<string, AspirationChoice | undefined>>,
   items: readonly AspirationItem[] = ASPIRATION_ITEMS,
-): Record<Pillar, number> {
-  const wins: Record<Pillar, number> = { sovereign: 0, warrior: 0, magician: 0, lover: 0 };
-  const appearances: Record<Pillar, number> = { sovereign: 0, warrior: 0, magician: 0, lover: 0 };
+): Record<Archetype4, number> {
+  const wins: Record<Archetype4, number> = { king: 0, warrior: 0, magician: 0, lover: 0 };
+  const appearances: Record<Archetype4, number> = { king: 0, warrior: 0, magician: 0, lover: 0 };
 
   // Only answered contests count. Counting an unanswered pair as an appearance
   // would score the pillar as though it had lost, so a partly-finished section
@@ -159,8 +158,8 @@ export function scoreAspiration(
     wins[choice === "left" ? item.left.pillar : item.right.pillar] += 1;
   }
 
-  const out = {} as Record<Pillar, number>;
-  for (const pillar of PILLARS) {
+  const out = {} as Record<Archetype4, number>;
+  for (const pillar of ARCHETYPES_4) {
     out[pillar] =
       appearances[pillar] === 0
         ? 50
@@ -172,8 +171,8 @@ export function scoreAspiration(
 /** Every pillar must appear the same number of times, or the scale is rigged. */
 export function aspirationBalance(
   items: readonly AspirationItem[] = ASPIRATION_ITEMS,
-): Record<Pillar, number> {
-  const counts: Record<Pillar, number> = { sovereign: 0, warrior: 0, magician: 0, lover: 0 };
+): Record<Archetype4, number> {
+  const counts: Record<Archetype4, number> = { king: 0, warrior: 0, magician: 0, lover: 0 };
   for (const item of items) {
     counts[item.left.pillar] += 1;
     counts[item.right.pillar] += 1;

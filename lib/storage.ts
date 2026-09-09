@@ -39,8 +39,13 @@ export interface StoredPersonalityResult {
   id: string;
   completedAt: number;
   /** Which form was taken; results are re-scored from `responses` on display. */
-  form?: "short" | "full";
+  form?: string;
   qualityLevel?: string;
+  /** Reported confidence in the reading, 0-100, with its plus-or-minus band. */
+  confidencePercent?: number;
+  confidenceMargin?: number;
+  /** Which of the four energies led. */
+  dominant?: string;
   traitScores: Record<Trait, number>;
   primaryId: string;
   primaryMatch: number;
@@ -66,11 +71,11 @@ export interface ActiveIqSession {
 }
 
 export interface ActivePersonalitySession {
-  form: "short" | "full";
+  form: string;
   responses: Record<string, LikertValue>;
   scenarioChoices: Record<string, string>;
   aspirationChoices: Record<string, "left" | "right">;
-  section: "statements" | "scenarios" | "priorities";
+  section: string;
   index: number;
   startedAt: number;
 }
@@ -168,7 +173,7 @@ function isActivePersonality(value: unknown): value is ActivePersonalitySession 
     !!s &&
     !!s.responses &&
     typeof s.responses === "object" &&
-    (s.form === "short" || s.form === "full")
+    typeof s.form === "string"
   );
 }
 
