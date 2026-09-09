@@ -38,6 +38,9 @@ export interface StoredIqAttempt {
 export interface StoredPersonalityResult {
   id: string;
   completedAt: number;
+  /** Which form was taken; results are re-scored from `responses` on display. */
+  form?: "short" | "full";
+  qualityLevel?: string;
   traitScores: Record<Trait, number>;
   primaryId: string;
   primaryMatch: number;
@@ -61,6 +64,7 @@ export interface ActiveIqSession {
 }
 
 export interface ActivePersonalitySession {
+  form: "short" | "full";
   responses: Record<string, LikertValue>;
   index: number;
   startedAt: number;
@@ -155,7 +159,12 @@ function isActiveIq(value: unknown): value is ActiveIqSession {
 
 function isActivePersonality(value: unknown): value is ActivePersonalitySession {
   const s = value as ActivePersonalitySession | null;
-  return !!s && !!s.responses && typeof s.responses === "object";
+  return (
+    !!s &&
+    !!s.responses &&
+    typeof s.responses === "object" &&
+    (s.form === "short" || s.form === "full")
+  );
 }
 
 export function loadStore(): ModuloStore {

@@ -45,16 +45,33 @@ export const TRAIT_BLURBS: Record<Trait, string> = {
   competitiveness: "Measuring yourself against others and raising your effort.",
 };
 
+/** Short, plain-language poles used when describing a profile back to someone. */
+export const TRAIT_POLES: Record<Trait, { high: string; low: string }> = {
+  leadership: { high: "takes charge", low: "prefers to follow" },
+  independence: { high: "self-directed", low: "collaborative by default" },
+  discipline: { high: "follows through", low: "led by momentum" },
+  sociability: { high: "energised by people", low: "restored by solitude" },
+  riskTolerance: { high: "moves under uncertainty", low: "waits for certainty" },
+  curiosity: { high: "digs past the useful point", low: "practical and focused" },
+  assertiveness: { high: "says it plainly", low: "keeps the peace" },
+  empathy: { high: "reads the room", low: "task before mood" },
+  competitiveness: { high: "keeps score", low: "runs your own race" },
+};
+
 export interface PersonalityItem {
   id: string;
   trait: Trait;
   text: string;
   /** True when agreement indicates *less* of the trait. */
   reverse: boolean;
+  /** Included in the 36-item short form as well as the full form. */
+  core: boolean;
 }
 
 /** 1 = strongly disagree … 5 = strongly agree. */
 export type LikertValue = 1 | 2 | 3 | 4 | 5;
+
+export const LIKERT_VALUES: LikertValue[] = [1, 2, 3, 4, 5];
 
 export const LIKERT_LABELS: Record<LikertValue, string> = {
   1: "Strongly disagree",
@@ -62,4 +79,19 @@ export const LIKERT_LABELS: Record<LikertValue, string> = {
   3: "Neutral",
   4: "Agree",
   5: "Strongly agree",
+};
+
+export const LIKERT_SHORT: Record<LikertValue, string> = {
+  1: "Strongly disagree",
+  2: "Disagree",
+  3: "Neutral",
+  4: "Agree",
+  5: "Strongly agree",
+};
+
+export type FormLength = "short" | "full";
+
+export const FORM_LABELS: Record<FormLength, string> = {
+  short: "Short form",
+  full: "Full form",
 };

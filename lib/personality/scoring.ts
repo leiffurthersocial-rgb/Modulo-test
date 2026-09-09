@@ -1,15 +1,30 @@
 import { ARCHETYPES, type Archetype } from "./archetypes";
-import { ITEMS_PER_TRAIT, PERSONALITY_ITEMS } from "./items";
-import { TRAITS, type LikertValue, type PersonalityItem, type Trait } from "./types";
+import { CORE_ITEMS_PER_TRAIT, ITEMS_PER_TRAIT, PERSONALITY_ITEMS } from "./items";
+import { assessQuality, type ResponseQuality } from "./quality";
+import { findCombinations, type TraitCombination } from "./tensions";
+import {
+  TRAITS,
+  type LikertValue,
+  type PersonalityItem,
+  type Trait,
+} from "./types";
 
 export interface TraitScore {
   trait: Trait;
-  /** Raw sum of the five keyed responses, 5–25. */
+  /** Sum of the keyed responses across this trait's items. */
   raw: number;
   /** Normalised 0–100. */
   score: number;
+  /** Distance from the taker's own profile average, in points. */
+  relative: number;
   level: "low" | "moderate" | "high";
   answered: number;
+  total: number;
+  /**
+   * How far this trait's forward and reversed items disagree, in scale points.
+   * A high value means this particular trait score should be trusted less.
+   */
+  inconsistency: number | null;
 }
 
 export interface ArchetypeMatch {
@@ -18,16 +33,28 @@ export interface ArchetypeMatch {
   match: number;
 }
 
+export type MatchConfidence = "clear" | "moderate" | "borderline";
+
 export interface PersonalityOutcome {
   traits: TraitScore[];
   traitScores: Record<Trait, number>;
   ranking: ArchetypeMatch[];
   primary: ArchetypeMatch;
   secondary: ArchetypeMatch;
-  /** Traits furthest above your own profile average — what defines you. */
+  /**
+   * How far clear the primary is. When two archetypes are within a point or two
+   * the profile genuinely sits between them, and saying so is more honest than
+   * naming a winner.
+   */
+  confidence: MatchConfidence;
+  /** Gap in match points between the primary and the reported secondary. */
+  margin: number;
+  /** Traits furthest above the taker's own average. */
   definingTraits: Trait[];
-  /** Traits furthest below your own average. */
+  /** Traits furthest below it. */
   counterTraits: Trait[];
+  combinations: TraitCombination[];
+  quality: ResponseQuality;
   answered: number;
   total: number;
 }
@@ -45,14 +72,17 @@ export function levelFor(score: number): "low" | "moderate" | "high" {
 export function scoreTraits(
   responses: Readonly<Record<string, LikertValue | undefined>>,
   items: readonly PersonalityItem[] = PERSONALITY_ITEMS,
-): TraitScore[] {
+): Omit<TraitScore, "relative">[] {
+  const quality = assessQuality(responses, items);
+
   return TRAITS.map((trait) => {
     const traitItems = items.filter((i) => i.trait === trait);
     let raw = 0;
     let answered = 0;
     for (const item of traitItems) {
       const value = responses[item.id];
-      // Unanswered items score as neutral so a partial profile stays centred.
+      // Unanswered items score as neutral so a partial profile stays centred
+      // rather than collapsing towards zero.
       raw += value === undefined ? 3 : keyedValue(item, value);
       if (value !== undefined) answered += 1;
     }
@@ -65,6 +95,8 @@ export function scoreTraits(
       score: Math.round(score * 10) / 10,
       level: levelFor(score),
       answered,
+      total: traitItems.length,
+      inconsistency: quality.traitInconsistency[trait] ?? null,
     };
   });
 }
@@ -78,13 +110,44 @@ function norm(a: Record<Trait, number>): number {
 }
 
 /**
+ * Archetype vectors are compared in the same centred space as the taker's
+ * profile. Without this an archetype whose weights are mostly positive — a
+ * generally "high" description — matches everyone slightly better than one
+ * built from a mix, which biases the whole set towards a few traits.
+ */
+const centredVectors = new WeakMap<Archetype, Record<Trait, number>>();
+
+export function centredVector(archetype: Archetype): Record<Trait, number> {
+  const cached = centredVectors.get(archetype);
+  if (cached) return cached;
+  const mean = TRAITS.reduce((sum, t) => sum + archetype.vector[t], 0) / TRAITS.length;
+  const centred = TRAITS.reduce(
+    (acc, t) => {
+      acc[t] = archetype.vector[t] - mean;
+      return acc;
+    },
+    {} as Record<Trait, number>,
+  );
+  centredVectors.set(archetype, centred);
+  return centred;
+}
+
+/** Cosine similarity between two archetypes: 1 = they describe the same person. */
+export function archetypeSimilarity(a: Archetype, b: Archetype): number {
+  const va = centredVector(a);
+  const vb = centredVector(b);
+  const magnitude = norm(va) * norm(vb);
+  return magnitude < 1e-9 ? 0 : dot(va, vb) / magnitude;
+}
+
+/**
  * Archetype fit uses the *shape* of the profile, not its height.
  *
- * The trait scores are centred on the taker's own average, so what counts is
- * which traits stand out relative to the rest — someone who agrees with
+ * Trait scores are centred on the taker's own average, so what counts is which
+ * traits stand out relative to their others — someone who agrees with
  * everything and someone who agrees with nothing can still have different
  * profiles. Cosine similarity against each archetype vector then maps to a
- * 0–100 match, which is why no single question can decide the result.
+ * 0–100 match, which is why no single answer can decide the result.
  */
 export function matchArchetypes(
   traitScores: Record<Trait, number>,
@@ -116,11 +179,12 @@ export function matchArchetypes(
 
   return archetypes
     .map((archetype) => {
-      const vectorNorm = norm(archetype.vector);
+      const vector = centredVector(archetype);
+      const vectorNorm = norm(vector);
       const cosine =
         profileNorm < 1e-6 || vectorNorm < 1e-6
           ? 0
-          : dot(centred, archetype.vector) / (profileNorm * vectorNorm);
+          : dot(centred, vector) / (profileNorm * vectorNorm);
       return {
         archetype,
         match: Math.round(((cosine + 1) / 2) * 1000) / 10,
@@ -129,12 +193,49 @@ export function matchArchetypes(
     .sort((a, b) => b.match - a.match || a.archetype.id.localeCompare(b.archetype.id));
 }
 
+/** Archetypes closer than this describe substantially the same person. */
+const SECONDARY_DISTINCTNESS = 0.72;
+
+/**
+ * The runner-up is often a near-clone of the winner — The Scholar and The
+ * Craftsman share most of their emphasis — and reporting both tells the taker
+ * nothing they did not already learn from the primary. Pick instead the highest
+ * ranked archetype that actually describes a different person.
+ */
+export function pickSecondary(
+  ranking: readonly ArchetypeMatch[],
+  primary: ArchetypeMatch,
+): ArchetypeMatch {
+  const distinct = ranking.find(
+    (entry) =>
+      entry.archetype.id !== primary.archetype.id &&
+      archetypeSimilarity(entry.archetype, primary.archetype) < SECONDARY_DISTINCTNESS,
+  );
+  return distinct ?? ranking[1] ?? primary;
+}
+
+export function confidenceFor(margin: number, quality: ResponseQuality): MatchConfidence {
+  if (quality.level === "questionable") return "borderline";
+  if (margin >= 6) return "clear";
+  if (margin >= 2.5) return "moderate";
+  return "borderline";
+}
+
+export const CONFIDENCE_BLURBS: Record<MatchConfidence, string> = {
+  clear:
+    "Your profile sits distinctly closer to this archetype than to any other with a different shape.",
+  moderate:
+    "This archetype fits best, but the runner-up is not far behind — read both descriptions and take what rings true.",
+  borderline:
+    "Your profile sits genuinely between two archetypes rather than inside one. Neither description alone will fit well; the pair together will fit better than either.",
+};
+
 export function scorePersonality(
   responses: Readonly<Record<string, LikertValue | undefined>>,
   items: readonly PersonalityItem[] = PERSONALITY_ITEMS,
 ): PersonalityOutcome {
-  const traits = scoreTraits(responses, items);
-  const traitScores = traits.reduce(
+  const base = scoreTraits(responses, items);
+  const traitScores = base.reduce(
     (acc, t) => {
       acc[t.trait] = t.score;
       return acc;
@@ -142,12 +243,19 @@ export function scorePersonality(
     {} as Record<Trait, number>,
   );
 
-  const ranking = matchArchetypes(traitScores);
   const mean = TRAITS.reduce((sum, t) => sum + traitScores[t], 0) / TRAITS.length;
-  const ordered = [...TRAITS].sort((a, b) => traitScores[b] - traitScores[a]);
+  const traits: TraitScore[] = base.map((t) => ({
+    ...t,
+    relative: Math.round((t.score - mean) * 10) / 10,
+  }));
 
+  const ranking = matchArchetypes(traitScores);
   const primary = ranking[0] as ArchetypeMatch;
-  const secondary = (ranking[1] ?? ranking[0]) as ArchetypeMatch;
+  const secondary = pickSecondary(ranking, primary);
+  const margin = Math.round((primary.match - secondary.match) * 10) / 10;
+
+  const quality = assessQuality(responses, items);
+  const ordered = [...TRAITS].sort((a, b) => traitScores[b] - traitScores[a]);
 
   return {
     traits,
@@ -155,11 +263,16 @@ export function scorePersonality(
     ranking,
     primary,
     secondary,
-    definingTraits: ordered.filter((t) => traitScores[t] >= mean).slice(0, 3),
-    counterTraits: ordered.slice(-2).reverse(),
+    confidence: confidenceFor(margin, quality),
+    margin,
+    definingTraits: ordered.filter((t) => traitScores[t] > mean).slice(0, 3),
+    counterTraits: ordered.filter((t) => traitScores[t] < mean).slice(-2).reverse(),
+    combinations: findCombinations(traitScores),
+    quality,
     answered: items.filter((i) => responses[i.id] !== undefined).length,
     total: items.length,
   };
 }
 
-export const EXPECTED_ITEM_COUNT = TRAITS.length * ITEMS_PER_TRAIT;
+export const FULL_ITEM_COUNT = TRAITS.length * ITEMS_PER_TRAIT;
+export const SHORT_ITEM_COUNT = TRAITS.length * CORE_ITEMS_PER_TRAIT;

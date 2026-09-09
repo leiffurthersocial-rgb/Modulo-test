@@ -6,6 +6,7 @@ import { TESTS } from "@/lib/iq/tests";
 import { CATEGORIES, CATEGORY_BLURBS, CATEGORY_LABELS } from "@/lib/iq/types";
 import { ARCHETYPES } from "@/lib/personality/archetypes";
 import { PERSONALITY_ITEMS } from "@/lib/personality/items";
+import { SHORT_ITEM_COUNT } from "@/lib/personality/scoring";
 import { TRAITS, TRAIT_LABELS } from "@/lib/personality/types";
 
 const PRINCIPLES = [
@@ -106,12 +107,14 @@ export default function HomePage() {
           <div className="grid gap-10 p-7 sm:p-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
             <div>
               <Eyebrow>Personality</Eyebrow>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Nine traits. Ten archetypes.</h2>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Nine traits. Twelve archetypes.</h2>
               <p className="mt-4 text-[14.5px] leading-relaxed text-fog-300">
-                Rate {PERSONALITY_ITEMS.length} statements on a five-point scale. Modulo scores nine
-                traits, then matches the <em>shape</em> of your profile — relative strengths, not raw
-                agreement — against ten archetypes we designed. You get a primary and a secondary, with
-                the strengths and the failure modes of each.
+                Rate {PERSONALITY_ITEMS.length} statements on a five-point scale, or {SHORT_ITEM_COUNT}{" "}
+                on the short form. Exactly half the statements for each trait are reverse-worded, so
+                agreeing with everything cannot produce a high profile. Modulo scores nine traits,
+                matches the <em>shape</em> of your profile against {ARCHETYPES.length} archetypes, and
+                checks your answers for straight-lining and self-contradiction — telling you plainly
+                when the result should not be trusted.
               </p>
               <div className="mt-6 flex flex-wrap gap-1.5">
                 {TRAITS.map((trait) => (

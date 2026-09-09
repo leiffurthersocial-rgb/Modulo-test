@@ -238,9 +238,11 @@ export const ARCHETYPES: Archetype[] = [
       sociability: 0.2,
       leadership: 0.2,
       assertiveness: 0.0,
-      curiosity: -0.2,
       independence: -0.2,
       competitiveness: -0.3,
+      // Guardians are actively sceptical of novelty, not merely indifferent:
+      // the job is protecting arrangements that already work.
+      curiosity: -0.35,
       riskTolerance: -0.7,
     }),
     strengths: [
@@ -308,6 +310,62 @@ export const ARCHETYPES: Archetype[] = [
       "Polishes past the point where it changes the outcome",
       "Reluctant to ship something merely good enough",
       "Hard to delegate to, because the standard is unstated",
+    ],
+  },
+  {
+    id: "catalyst",
+    name: "The Catalyst",
+    tagline: "Starts the reaction, rarely stays for the whole of it.",
+    description:
+      "You create momentum. Rooms move faster with you in them, plans that were theoretical become things people are actually doing, and you are comfortable pushing before everything is settled. Sustaining what you started interests you far less than starting it.",
+    vector: v({
+      sociability: 0.9,
+      riskTolerance: 0.7,
+      assertiveness: 0.6,
+      curiosity: 0.4,
+      leadership: 0.3,
+      competitiveness: 0.2,
+      empathy: 0.1,
+      independence: -0.2,
+      discipline: -0.7,
+    }),
+    strengths: [
+      "Converts talk into motion faster than anyone else present",
+      "Comfortable acting before the picture is complete",
+      "Draws other people into an idea without needing authority",
+    ],
+    weaknesses: [
+      "Momentum stalls the moment you turn to something else",
+      "Commitments outrun the follow-through behind them",
+      "Mistakes activity for progress when the two diverge",
+    ],
+  },
+  {
+    id: "advocate",
+    name: "The Advocate",
+    tagline: "Reads the room, then says the thing nobody will.",
+    description:
+      "You notice who is being overlooked and you are willing to make it awkward on their behalf. Unlike most people who feel strongly about fairness, you actually raise it — and unlike most people who speak up, you have thought about how the other side sees it first.",
+    vector: v({
+      empathy: 0.9,
+      assertiveness: 0.8,
+      leadership: 0.5,
+      sociability: 0.4,
+      discipline: 0.3,
+      independence: 0.3,
+      riskTolerance: 0.2,
+      curiosity: 0.1,
+      competitiveness: -0.4,
+    }),
+    strengths: [
+      "Raises the issue everyone else decided to live with",
+      "Combines genuine warmth with a willingness to confront",
+      "Trusted with things people would not tell a manager",
+    ],
+    weaknesses: [
+      "Takes on fights that were not yours to carry",
+      "Reads disagreement about method as disagreement about values",
+      "Burns credibility on small injustices, leaving less for large ones",
     ],
   },
 ];

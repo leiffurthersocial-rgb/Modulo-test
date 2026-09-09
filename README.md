@@ -26,8 +26,9 @@ defaults.
   five formats: multiple choice, free numeric entry, symbolic series, 3×3 abstract
   matrices and figure choice. Visual items are generated from explicit rules with a fixed
   seed, so every figure has a provably unique answer and never shifts between renders.
-- **Personality profile** — 45 statements on a 1–5 scale scoring nine traits, matched
-  against 10 Modulo archetypes.
+- **Personality profile** — 72 statements (or a balanced 36-item short form) on a 1–5
+  scale scoring nine traits, matched against 12 Modulo archetypes, with response-quality
+  diagnostics and a personalised write-up.
 - **Keyboard-drivable tests** — number keys answer, arrow keys navigate, and answer
   options carry proper `radiogroup` semantics.
 
@@ -75,12 +76,37 @@ prompt + stimulus + options. The generated visual items are deduplicated at buil
 the same reason: a repeat served as if it were new would quietly corrupt the novelty
 weighting.
 
-### Archetypes
+### The personality instrument
 
-Trait scores are centred on the taker's own mean before matching, so the result depends on
-the *shape* of the profile — relative strengths — not on how agreeable the taker was.
-Cosine similarity against 10 archetype vectors yields the primary and secondary. Every
-archetype is reachable, which the tests assert.
+Four design decisions do most of the work:
+
+**Balanced keying.** Each trait has eight statements, exactly four reverse-worded.
+Acquiescence bias — agreeing with whatever is put in front of you — cancels *exactly* at a
+50/50 split and only approximately otherwise. The tests assert that answering 1, 2, 4 or 5
+to every statement scores precisely 50 on all nine traits.
+
+**Interleaved presentation.** Statements are round-robinned across traits so no two
+consecutive items measure the same thing; a run of five leadership items invites you to
+answer the theme rather than the statement.
+
+**Response-quality diagnostics** (`quality.ts`). Variation, longest identical run,
+midpoint share, and — the strongest signal — how far each trait's forward and reversed
+items disagree. A long run only counts as straight-lining when variation is *also* low:
+someone genuinely extreme on most traits produces long runs honestly, and must not be
+accused of carelessness when their forward and reversed items agree perfectly. Where the
+pattern is unreliable the result says so at the top and downgrades match confidence
+regardless of the winning margin.
+
+**Honest matching.** Both the profile and the archetype vectors are mean-centred before
+cosine similarity, so an archetype built mostly from positive weights doesn't match
+everyone slightly better. Match confidence is reported from the margin: inside a couple of
+points the page says you sit *between* two archetypes rather than naming one. And the
+secondary is not the runner-up — The Scholar and The Craftsman correlate at 0.87, so
+reporting both tells you nothing — it's the highest-ranked archetype with a genuinely
+different shape.
+
+Retakes are compared against the previous profile (per-trait shifts, correlation, verdict),
+the personality-side counterpart to the IQ stability estimate.
 
 ## Honesty
 

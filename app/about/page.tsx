@@ -6,6 +6,7 @@ import { DIFFICULTY_THRESHOLD } from "@/lib/iq/scoring";
 import { TESTS } from "@/lib/iq/tests";
 import { ARCHETYPES } from "@/lib/personality/archetypes";
 import { PERSONALITY_ITEMS } from "@/lib/personality/items";
+import { SHORT_ITEM_COUNT } from "@/lib/personality/scoring";
 
 export const metadata: Metadata = { title: "Method" };
 
@@ -36,8 +37,10 @@ const SECTIONS = [
   {
     heading: "How the archetypes are derived",
     body: [
-      `The personality assessment is ${PERSONALITY_ITEMS.length} statements rated from one to five, five per trait, with reverse-keyed items in every trait so that agreeing with everything does not produce a maximal profile.`,
-      `Trait scores are then centred on your own average, which means what counts is the shape of the profile — which traits stand out relative to your others — rather than how strongly you agreed overall. That shape is compared against ${ARCHETYPES.length} archetype vectors by cosine similarity, and the two closest become your primary and secondary.`,
+      `The personality assessment is ${PERSONALITY_ITEMS.length} statements rated from one to five — eight per trait, of which exactly four are reverse-worded. That balance matters: acquiescence bias, the tendency to agree with whatever is put in front of you, cancels exactly when a trait has as many reversed items as forward ones, and only approximately when it does not. A balanced ${SHORT_ITEM_COUNT}-item short form is also offered.`,
+      "Statements are interleaved rather than grouped, so consecutive questions never measure the same trait. A run of five leadership items in a row invites you to answer the theme rather than the statement.",
+      `Trait scores are centred on your own average, so what counts is the shape of the profile — which traits stand out relative to your others — not how strongly you agreed overall. Archetype vectors are centred the same way, which stops archetypes built mostly from positive weights matching everyone slightly better. That shape is compared against ${ARCHETYPES.length} archetypes by cosine similarity.`,
+      "The secondary archetype is not simply the runner-up. Several archetypes describe substantially the same person — The Scholar and The Craftsman correlate at 0.87 — so reporting the runner-up would often tell you nothing new. Modulo instead reports the highest-ranked archetype whose shape genuinely differs from the primary.",
       "Because the comparison uses all nine traits at once, no single answer can decide the outcome.",
     ],
   },
