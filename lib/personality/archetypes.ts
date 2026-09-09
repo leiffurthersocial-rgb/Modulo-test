@@ -2,6 +2,7 @@ import type { Trait } from "./types";
 
 export interface Archetype {
   id: string;
+  /** Set from the pillar definitions; see pillars.ts. */
   name: string;
   tagline: string;
   description: string;

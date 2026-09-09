@@ -49,6 +49,8 @@ export interface StoredPersonalityResult {
   answered: number;
   total: number;
   responses: Record<string, LikertValue>;
+  scenarioChoices?: Record<string, string>;
+  aspirationChoices?: Record<string, "left" | "right">;
 }
 
 export interface ActiveIqSession {
@@ -66,6 +68,9 @@ export interface ActiveIqSession {
 export interface ActivePersonalitySession {
   form: "short" | "full";
   responses: Record<string, LikertValue>;
+  scenarioChoices: Record<string, string>;
+  aspirationChoices: Record<string, "left" | "right">;
+  section: "statements" | "scenarios" | "priorities";
   index: number;
   startedAt: number;
 }

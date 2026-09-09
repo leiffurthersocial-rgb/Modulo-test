@@ -6,7 +6,9 @@ import { TESTS } from "@/lib/iq/tests";
 import { CATEGORIES, CATEGORY_BLURBS, CATEGORY_LABELS } from "@/lib/iq/types";
 import { ARCHETYPES } from "@/lib/personality/archetypes";
 import { PERSONALITY_ITEMS } from "@/lib/personality/items";
-import { SHORT_ITEM_COUNT } from "@/lib/personality/scoring";
+import { ASPIRATION_ITEMS } from "@/lib/personality/aspiration";
+import { PILLAR_LIST } from "@/lib/personality/pillars";
+import { SCENARIOS } from "@/lib/personality/scenarios";
 import { TRAITS, TRAIT_LABELS } from "@/lib/personality/types";
 
 const PRINCIPLES = [
@@ -107,14 +109,15 @@ export default function HomePage() {
           <div className="grid gap-10 p-7 sm:p-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
             <div>
               <Eyebrow>Personality</Eyebrow>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Nine traits. Twelve archetypes.</h2>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Four pillars. Twelve sub-archetypes.</h2>
               <p className="mt-4 text-[14.5px] leading-relaxed text-fog-300">
-                Rate {PERSONALITY_ITEMS.length} statements on a five-point scale, or {SHORT_ITEM_COUNT}{" "}
-                on the short form. Exactly half the statements for each trait are reverse-worded, so
-                agreeing with everything cannot produce a high profile. Modulo scores nine traits,
-                matches the <em>shape</em> of your profile against {ARCHETYPES.length} archetypes, and
-                checks your answers for straight-lining and self-contradiction — telling you plainly
-                when the result should not be trusted.
+                Three sections measuring three different things: {PERSONALITY_ITEMS.length}{" "}
+                statements for how you see yourself, {SCENARIOS.length} situations with four
+                defensible answers each for what you would actually do, and{" "}
+                {ASPIRATION_ITEMS.length} forced choices between equally creditable things for what
+                you would refuse to give up. You get a dominant pillar, its sub-archetype, the
+                shadow you fall into under pressure, and — where what you value outruns how you act
+                — the gap that is worth closing.
               </p>
               <div className="mt-6 flex flex-wrap gap-1.5">
                 {TRAITS.map((trait) => (
@@ -128,14 +131,30 @@ export default function HomePage() {
               </div>
               <p className="mt-6 text-[12px] leading-relaxed text-fog-400">
                 Modulo archetypes are created by Modulo. They are a readable summary of your trait
-                profile — not a scientifically established personality typology.
+                profile — not a scientifically established personality typology. The four-pillar
+                structure follows the King / Warrior / Magician / Lover model (Moore &amp;
+                Gillette, 1990); the content and scoring are ours.
               </p>
             </div>
-            <ul className="grid grid-cols-2 gap-2.5 self-start">
-              {ARCHETYPES.map((archetype) => (
-                <li key={archetype.id} className="rounded-xl border border-ink-800 bg-ink-950/40 p-3.5">
-                  <p className="text-[13px] font-medium tracking-tight text-fog-100">{archetype.name}</p>
-                  <p className="mt-1 text-[11.5px] leading-snug text-fog-400">{archetype.tagline}</p>
+            <ul className="space-y-2.5 self-start">
+              {PILLAR_LIST.map((pillar) => (
+                <li key={pillar.id} className="rounded-xl border border-ink-800 bg-ink-950/40 p-4">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-[14px] font-medium tracking-tight text-fog-100">
+                      {pillar.name}
+                    </p>
+                    <p className="text-[11px] text-fog-400">{pillar.classical}</p>
+                  </div>
+                  <p className="mt-1 text-[11.5px] leading-snug text-fog-400">{pillar.tagline}</p>
+                  <p className="mt-2 text-[11px] leading-snug text-fog-400">
+                    <span className="text-fog-300">Shadows:</span>{" "}
+                    {pillar.shadow.inflated.name} · {pillar.shadow.deflated.name}
+                  </p>
+                  <p className="mt-1.5 text-[11px] leading-snug text-fog-400">
+                    {pillar.archetypes
+                      .map((id) => ARCHETYPES.find((a) => a.id === id)?.name ?? id)
+                      .join(" · ")}
+                  </p>
                 </li>
               ))}
             </ul>

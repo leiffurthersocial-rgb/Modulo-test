@@ -1,4 +1,9 @@
 import { ARCHETYPES, type Archetype } from "./archetypes";
+import type { AspirationChoice, AspirationItem } from "./aspiration";
+import { ASPIRATION_ITEMS } from "./aspiration";
+import type { Pillar } from "./pillars";
+import { buildFourPillarProfile, subArchetypeFor, type FourPillarProfile } from "./profile";
+import { SCENARIOS, type Scenario } from "./scenarios";
 import { CORE_ITEMS_PER_TRAIT, ITEMS_PER_TRAIT, PERSONALITY_ITEMS } from "./items";
 import { assessQuality, type ResponseQuality } from "./quality";
 import { findCombinations, type TraitCombination } from "./tensions";
@@ -57,6 +62,10 @@ export interface PersonalityOutcome {
   quality: ResponseQuality;
   answered: number;
   total: number;
+  /** Present when situational and forced-choice sections were also completed. */
+  pillars: FourPillarProfile | null;
+  /** Best-fitting sub-archetype inside the dominant pillar. */
+  pillarArchetype: { archetype: Archetype; match: number } | null;
 }
 
 export function keyedValue(item: PersonalityItem, value: LikertValue): number {
@@ -230,9 +239,17 @@ export const CONFIDENCE_BLURBS: Record<MatchConfidence, string> = {
     "Your profile sits genuinely between two archetypes rather than inside one. Neither description alone will fit well; the pair together will fit better than either.",
 };
 
+export interface ScoreOptions {
+  scenarioChoices?: Readonly<Record<string, string | undefined>>;
+  scenarios?: readonly Scenario[];
+  aspirationChoices?: Readonly<Record<string, AspirationChoice | undefined>>;
+  aspirationItems?: readonly AspirationItem[];
+}
+
 export function scorePersonality(
   responses: Readonly<Record<string, LikertValue | undefined>>,
   items: readonly PersonalityItem[] = PERSONALITY_ITEMS,
+  options: ScoreOptions = {},
 ): PersonalityOutcome {
   const base = scoreTraits(responses, items);
   const traitScores = base.reduce(
@@ -257,6 +274,23 @@ export function scorePersonality(
   const quality = assessQuality(responses, items);
   const ordered = [...TRAITS].sort((a, b) => traitScores[b] - traitScores[a]);
 
+  const hasSituational =
+    options.scenarioChoices !== undefined && options.aspirationChoices !== undefined;
+  const pillars = hasSituational
+    ? buildFourPillarProfile({
+        traitScores,
+        scenarioChoices: options.scenarioChoices ?? {},
+        scenarios: options.scenarios ?? SCENARIOS,
+        aspirationChoices: options.aspirationChoices ?? {},
+        aspirationItems: options.aspirationItems ?? ASPIRATION_ITEMS,
+      })
+    : null;
+
+  // Inside the dominant pillar, the trait profile decides which of its three
+  // sub-archetypes fits — the pillar says what you are for, the sub-archetype
+  // says how you go about it.
+  const pillarArchetype = pillars ? subArchetypeFor(pillars.primary, ranking) : null;
+
   return {
     traits,
     traitScores,
@@ -271,8 +305,12 @@ export function scorePersonality(
     quality,
     answered: items.filter((i) => responses[i.id] !== undefined).length,
     total: items.length,
+    pillars,
+    pillarArchetype,
   };
 }
+
+export type { Pillar };
 
 export const FULL_ITEM_COUNT = TRAITS.length * ITEMS_PER_TRAIT;
 export const SHORT_ITEM_COUNT = TRAITS.length * CORE_ITEMS_PER_TRAIT;

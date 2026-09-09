@@ -26,9 +26,10 @@ defaults.
   five formats: multiple choice, free numeric entry, symbolic series, 3×3 abstract
   matrices and figure choice. Visual items are generated from explicit rules with a fixed
   seed, so every figure has a provably unique answer and never shifts between renders.
-- **Personality profile** — 72 statements (or a balanced 36-item short form) on a 1–5
-  scale scoring nine traits, matched against 12 Modulo archetypes, with response-quality
-  diagnostics and a personalised write-up.
+- **Four-pillar personality profile** — 72 statements + 20 situational items + 12
+  forced-choice priorities (or a balanced short form), producing a dominant pillar, its
+  sub-archetype, the shadow you fall into under pressure, and the gap between what you
+  value and how you act.
 - **Keyboard-drivable tests** — number keys answer, arrow keys navigate, and answer
   options carry proper `radiogroup` semantics.
 
@@ -76,7 +77,41 @@ prompt + stimulus + options. The generated visual items are deduplicated at buil
 the same reason: a repeat served as if it were new would quietly corrupt the novelty
 weighting.
 
-### The personality instrument
+### The four-pillar model
+
+The structure — four domains of character, each with an inflated and a deflated shadow —
+follows the King / Warrior / Magician / Lover framework (Moore & Gillette, 1990), drawn
+from Jungian archetype theory. The content, sub-archetypes, scenarios and scoring are
+Modulo's own. The twelve archetypes map three-per-pillar: Sovereign (Leader, Guardian,
+Strategist), Warrior (Competitor, Maverick, Builder), Magician (Scholar, Craftsman,
+Explorer), Lover (Diplomat, Advocate, Catalyst).
+
+Each pillar is measured three ways, and the disagreements between them are the output:
+
+| Mode | Question it answers | Items |
+| --- | --- | --- |
+| Statements (Likert) | How you describe yourself | 72 |
+| Situations (SJT) | What you'd actually do | 20 |
+| Priorities (forced choice) | What you'd refuse to give up | 12 |
+
+A statement announces what it measures, so it records self-image as much as behaviour.
+Situations give four responses a reasonable person might all choose, so picking one reveals
+disposition — and because only one can be picked, you can't claim all four pillars the way
+you can agree with every statement. Priorities pit two equally creditable things against
+each other, so the choice can't be explained by wanting to look good. Situational answers
+are weighted above statements (0.62 / 0.38); where the two disagree by more than 18 points,
+the result says so — that's usually a trait that's part of your self-image but not yet your
+default move.
+
+Six of the situations describe things going wrong, and their options map to the two shadow
+poles. Nobody picks an option labelled as a flaw, so each is written to sound reasonable
+from the inside — which is how shadows operate.
+
+**Aspiration minus expression** is the headline output: the pillar you value most above how
+you currently act, with concrete practices for it. Every pillar appears an equal number of
+times in the forced-choice pairs, which a test enforces.
+
+### The trait layer
 
 Four design decisions do most of the work:
 
