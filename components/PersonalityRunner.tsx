@@ -81,7 +81,6 @@ export function PersonalityRunner() {
       if (!form) return;
       saveActivePersonality({
         form,
-        responses: {},
         scenarioChoices: next.scenarioChoices ?? scenarioChoices,
         aspirationChoices: next.aspirationChoices ?? aspirationChoices,
         section: next.section ?? section,
@@ -151,7 +150,6 @@ export function PersonalityRunner() {
         dominant: outcome.four.dominant,
         answered,
         total,
-        responses: {},
         scenarioChoices,
         aspirationChoices,
       });

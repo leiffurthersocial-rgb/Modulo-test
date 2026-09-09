@@ -53,7 +53,8 @@ export interface StoredPersonalityResult {
   secondaryMatch: number;
   answered: number;
   total: number;
-  responses: Record<string, LikertValue>;
+  /** Retired statement answers, kept so profiles saved by older versions still parse. */
+  responses?: Record<string, LikertValue>;
   scenarioChoices?: Record<string, string>;
   aspirationChoices?: Record<string, "left" | "right">;
 }
@@ -72,7 +73,7 @@ export interface ActiveIqSession {
 
 export interface ActivePersonalitySession {
   form: string;
-  responses: Record<string, LikertValue>;
+  responses?: Record<string, LikertValue>;
   scenarioChoices: Record<string, string>;
   aspirationChoices: Record<string, "left" | "right">;
   section: string;
