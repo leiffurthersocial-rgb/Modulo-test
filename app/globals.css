@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink-950: #06070a;
+  --color-ink-900: #0a0c10;
+  --color-ink-850: #0e1116;
+  --color-ink-800: #12161c;
+  --color-ink-700: #1a1f27;
+  --color-ink-600: #262c37;
+  --color-ink-500: #3a424f;
+
+  --color-fog-400: #6f7787;
+  --color-fog-300: #98a0b0;
+  --color-fog-200: #c2c8d4;
+  --color-fog-100: #e9ecf2;
+
+  --color-sand-500: #d9b273;
+  --color-sand-400: #e4c391;
+  --color-sand-300: #efd7b4;
+
+  --color-jade-500: #7fae9f;
+  --color-jade-400: #9cc4b7;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+
+  --radius-xl2: 1.25rem;
+}
+
+:root {
+  color-scheme: dark;
+  --page-bg: var(--color-ink-950);
+}
+
+* {
+  border-color: var(--color-ink-700);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--page-bg);
+  color: var(--color-fog-100);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+}
+
+/* Ambient wash: two very soft radial gradients, fixed behind everything. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(217, 178, 115, 0.09), transparent 60%),
+    radial-gradient(50rem 36rem at 92% 8%, rgba(127, 174, 159, 0.07), transparent 62%),
+    radial-gradient(70rem 50rem at 50% 110%, rgba(120, 132, 200, 0.06), transparent 65%);
+}
+
+::selection {
+  background: rgba(217, 178, 115, 0.28);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer utilities {
+  .panel {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0)) ,
+      var(--color-ink-900);
+    border: 1px solid var(--color-ink-700);
+  }
+
+  .panel-hover {
+    transition:
+      border-color 180ms ease,
+      transform 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .panel-hover:hover {
+    border-color: var(--color-ink-500);
+    transform: translateY(-2px);
+  }
+
+  .hairline {
+    border-top: 1px solid var(--color-ink-700);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-balance-tight {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

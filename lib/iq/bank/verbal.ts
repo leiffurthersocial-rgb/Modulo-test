@@ -1,0 +1,266 @@
+import type { Question } from "../types";
+
+const c = (options: string[], correctIndex: number) =>
+  ({ kind: "choice", options, correctIndex }) as const;
+
+export const verbalQuestions: Question[] = [
+  {
+    id: "ver-001",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Bird is to nest as bee is to:",
+    answer: c(["Hive", "Honey", "Flower", "Swarm"], 0),
+    explanation: "The relationship is 'creature to the structure it lives in'.",
+  },
+  {
+    id: "ver-002",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Oak", "Rose", "Tulip", "Daisy"], 0),
+    explanation: "The other three are flowers; an oak is a tree.",
+  },
+  {
+    id: "ver-003",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Doctor is to hospital as teacher is to:",
+    answer: c(["School", "Student", "Lesson", "Book"], 0),
+    explanation: "The relationship is 'professional to workplace'.",
+  },
+  {
+    id: "ver-004",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Which word is closest in meaning to 'candid'?",
+    answer: c(["Frank", "Secretive", "Careless", "Hostile"], 0),
+    explanation: "Candid means open and straightforward in speech.",
+  },
+  {
+    id: "ver-005",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Which word is most nearly the opposite of 'scarce'?",
+    answer: c(["Abundant", "Costly", "Fragile", "Hidden"], 0),
+    explanation: "Scarce means in short supply; abundant is its opposite.",
+  },
+  {
+    id: "ver-006",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "'Ephemeral' most nearly means:",
+    answer: c(["Short-lived", "Weightless", "Mysterious", "Repeated"], 0),
+    explanation: "Ephemeral describes something lasting a very short time.",
+  },
+  {
+    id: "ver-007",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Prudent is to reckless as generous is to:",
+    answer: c(["Stingy", "Wealthy", "Kind", "Cautious"], 0),
+    explanation: "Both pairs are opposites.",
+  },
+  {
+    id: "ver-008",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Novel", "Sonnet", "Haiku", "Ode"], 0),
+    explanation: "The other three are forms of poem.",
+  },
+  {
+    id: "ver-009",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Shout", "Whisper", "Murmur", "Mumble"], 0),
+    explanation: "The other three describe quiet speech.",
+  },
+  {
+    id: "ver-010",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "'Laconic' most nearly means:",
+    answer: c(
+      ["Using very few words", "Deeply relaxed", "Openly rude", "Full of praise"],
+      0,
+    ),
+    explanation: "A laconic speaker is terse to the point of bluntness.",
+  },
+  {
+    id: "ver-011",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "Book is to chapter as symphony is to:",
+    answer: c(["Movement", "Orchestra", "Composer", "Concert"], 0),
+    explanation: "Both pairs relate a whole work to its major internal division.",
+  },
+  {
+    id: "ver-012",
+    category: "verbal",
+    difficulty: 4,
+    prompt:
+      "'Obfuscate' is to 'clarify' as which pair below relate to one another?",
+    answer: c(
+      [
+        "Conceal is to reveal",
+        "Expand is to enlarge",
+        "Begin is to start",
+        "Murky is to opaque",
+      ],
+      0,
+    ),
+    explanation:
+      "The stem pair are opposites; only 'conceal / reveal' is also an opposite pair.",
+  },
+  {
+    id: "ver-013",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "'Intransigent' most nearly means:",
+    answer: c(
+      ["Refusing to compromise", "Easily persuaded", "Constantly moving", "Deeply confused"],
+      0,
+    ),
+    explanation: "An intransigent person will not shift position.",
+  },
+  {
+    id: "ver-014",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "'Sanguine' most nearly means:",
+    answer: c(["Optimistic", "Bloodthirsty", "Exhausted", "Sceptical"], 0),
+    explanation:
+      "In modern usage sanguine means cheerfully confident about the future.",
+  },
+  {
+    id: "ver-015",
+    category: "verbal",
+    difficulty: 5,
+    prompt:
+      "Choose the word that best completes the sentence: 'Her argument was ___; every objection had already been anticipated and answered.'",
+    answer: c(["airtight", "tenuous", "verbose", "derivative"], 0),
+    explanation:
+      "The second clause describes an argument with no gaps, which is what 'airtight' means.",
+  },
+  {
+    id: "ver-016",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Puppy is to dog as kitten is to:",
+    answer: c(["Cat", "Kennel", "Fur", "Mouse"], 0),
+    explanation: "The relationship is 'young animal to adult animal'.",
+  },
+  {
+    id: "ver-017",
+    category: "verbal",
+    difficulty: 3,
+    prompt:
+      "The letters H, E, L, W, A can be rearranged to spell the name of a:",
+    answer: c(["Animal", "Fruit", "Country", "Tool"], 0),
+    explanation: "The letters spell WHALE.",
+  },
+  {
+    id: "ver-018",
+    category: "verbal",
+    difficulty: 4,
+    prompt:
+      "The letters N, I, P, S, A can be rearranged to spell the name of a:",
+    answer: c(["Country", "Animal", "Fruit", "Metal"], 0),
+    explanation: "The letters spell SPAIN.",
+  },
+  {
+    id: "ver-019",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Granite", "Copper", "Iron", "Zinc"], 0),
+    explanation: "The other three are metals; granite is a rock.",
+  },
+  {
+    id: "ver-020",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "Nurture is to nature as learned is to:",
+    answer: c(["Innate", "Studied", "Practised", "Forgotten"], 0),
+    explanation:
+      "Nurture pairs with what is acquired and nature with what is inborn.",
+  },
+  {
+    id: "ver-021",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "'Perfunctory' most nearly means:",
+    answer: c(
+      ["Done without real care", "Perfectly executed", "Highly formal", "Unusually thorough"],
+      0,
+    ),
+    explanation: "A perfunctory act is carried out as a routine minimum.",
+  },
+  {
+    id: "ver-022",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Drought is to water as famine is to:",
+    answer: c(["Food", "Hunger", "Land", "Poverty"], 0),
+    explanation: "Each pair names a shortage and the resource that is short.",
+  },
+  {
+    id: "ver-023",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "'Assiduous' most nearly means:",
+    answer: c(["Diligent", "Acidic", "Doubtful", "Assertive"], 0),
+    explanation: "Assiduous describes constant, careful effort.",
+  },
+  {
+    id: "ver-024",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "Which word is closest in meaning to 'ostensible'?",
+    answer: c(["Apparent", "Showy", "Hostile", "Obsolete"], 0),
+    explanation:
+      "Ostensible means stated or appearing to be true, often as opposed to the real reason.",
+  },
+  {
+    id: "ver-025",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Kettle", "Cup", "Mug", "Glass"], 0),
+    explanation: "The other three are vessels you drink from.",
+  },
+  {
+    id: "ver-026",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Anchor is to ship as which word is to kite?",
+    answer: c(["String", "Wind", "Sky", "Tail"], 0),
+    explanation: "Both tether the object and stop it drifting away.",
+  },
+  {
+    id: "ver-027",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "To 'equivocate' is to:",
+    answer: c(
+      [
+        "Speak ambiguously to avoid committing yourself",
+        "Argue both sides of a case fairly",
+        "Correct an earlier mistake",
+        "Treat two people as equals",
+      ],
+      0,
+    ),
+    explanation:
+      "Equivocation uses deliberately unclear language to dodge commitment.",
+  },
+  {
+    id: "ver-028",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Which word means the opposite of 'ascend'?",
+    answer: c(["Descend", "Arrive", "Expand", "Hasten"], 0),
+    explanation: "Ascend means to go up; descend means to go down.",
+  },
+];
