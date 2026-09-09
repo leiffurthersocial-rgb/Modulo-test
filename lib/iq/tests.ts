@@ -42,6 +42,17 @@ export const TESTS: TestDefinition[] = [
     difficultyProfile: BALANCED,
   },
   {
+    id: "challenge",
+    name: "Challenge Test",
+    tagline: "30 questions · 35 minutes",
+    description:
+      "The hardest paper Modulo builds: full-spectrum, weighted towards the top two difficulty levels. Expect to miss several — the estimate is driven by which hard items you solve, not by finishing.",
+    categories: ["logical", "numerical", "pattern", "spatial", "verbal"],
+    questionCount: 30,
+    timeLimitSec: 35 * 60,
+    difficultyProfile: { 1: 0, 2: 1, 3: 3, 4: 4, 5: 3 },
+  },
+  {
     id: "logic",
     name: "Logic Test",
     tagline: "15 questions · 15 minutes",
@@ -98,7 +109,7 @@ export const TESTS: TestDefinition[] = [
   },
 ];
 
-export const FULL_SPECTRUM_TEST_IDS = ["quick", "standard"] as const;
+export const FULL_SPECTRUM_TEST_IDS = ["quick", "standard", "challenge"] as const;
 
 export function getTest(id: string): TestDefinition | undefined {
   return TESTS.find((t) => t.id === id);

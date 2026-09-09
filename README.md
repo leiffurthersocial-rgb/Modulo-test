@@ -20,14 +20,16 @@ defaults.
 
 ## What's here
 
-- **7 IQ tests** — Quick, Standard (both full-spectrum) plus focused Logic, Pattern,
-  Numerical, Spatial and Verbal tests.
-- **155 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
+- **8 IQ tests** — Quick, Standard and Challenge (full-spectrum) plus focused Logic,
+  Pattern, Numerical, Spatial and Verbal tests.
+- **276 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
   five formats: multiple choice, free numeric entry, symbolic series, 3×3 abstract
   matrices and figure choice. Visual items are generated from explicit rules with a fixed
   seed, so every figure has a provably unique answer and never shifts between renders.
 - **Personality profile** — 45 statements on a 1–5 scale scoring nine traits, matched
   against 10 Modulo archetypes.
+- **Keyboard-drivable tests** — number keys answer, arrow keys navigate, and answer
+  options carry proper `radiogroup` semantics.
 
 ## Architecture
 
@@ -66,6 +68,12 @@ questions barely moves it.
 Every served question id is recorded. The selector ranks unseen questions ahead of seen
 ones, so a retake draws an entirely new paper until the pool is exhausted; once it is, the
 attempt is flagged as low-novelty and down-weighted rather than silently trusted.
+
+`validateBank` enforces the invariants this depends on — unique ids, in-range answers, no
+repeated options, exactly one blank per matrix, and no two questions with identical
+prompt + stimulus + options. The generated visual items are deduplicated at build time for
+the same reason: a repeat served as if it were new would quietly corrupt the novelty
+weighting.
 
 ### Archetypes
 

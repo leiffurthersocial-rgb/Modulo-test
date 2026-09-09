@@ -70,7 +70,7 @@ function rotationMatrix(index: number, rng: Rng): Question {
   return {
     id: `vis-rot-${String(index).padStart(3, "0")}`,
     category: "pattern",
-    difficulty: (colStep === 90 ? 2 : 4) as Difficulty,
+    difficulty: (colStep === 90 ? 2 : colStep === 45 ? 4 : 5) as Difficulty,
     prompt: "Which figure completes the grid?",
     stimulus: { kind: "glyph-matrix", cells },
     answer: { kind: "glyph-choice", options, correctIndex },
@@ -107,10 +107,12 @@ function countMatrix(index: number, rng: Rng): Question {
     rng,
   );
 
+  const plainShape = shape === "circle" || shape === "square" || shape === "triangle";
+
   return {
     id: `vis-cnt-${String(index).padStart(3, "0")}`,
     category: "pattern",
-    difficulty: 2,
+    difficulty: (plainShape ? 1 : 2) as Difficulty,
     prompt: "Which figure completes the grid?",
     stimulus: { kind: "glyph-matrix", cells },
     answer: { kind: "glyph-choice", options, correctIndex },
@@ -171,6 +173,7 @@ function oddOneOut(index: number, rng: Rng): Question {
   let odd: Glyph;
   let family: Glyph[];
   let explanation: string;
+  let difficulty: Difficulty;
 
   if (mode === 0) {
     const otherShape = (shuffle(ANY_SHAPE, rng).find((s) => s !== shape) ??
@@ -178,17 +181,20 @@ function oddOneOut(index: number, rng: Rng): Question {
     family = [0, 45, 90, 135].map((rotation) => ({ shape, fill, rotation, count }));
     odd = { shape: otherShape, fill, rotation: 0, count };
     explanation = "Four figures share the same shape; one uses a different shape.";
+    difficulty = 1;
   } else if (mode === 1) {
     const otherFill = (shuffle(FILLS, rng).find((f) => f !== fill) ?? "solid") as FillStyle;
     family = [0, 45, 90, 180].map((rotation) => ({ shape, fill, rotation, count }));
     odd = { shape, fill: otherFill, rotation: 135, count };
     explanation = "Four figures share the same fill style; one is filled differently.";
+    difficulty = 3;
   } else {
     const otherCount = count === 3 ? 1 : count + 1;
     family = [0, 90, 180, 270].map((rotation) => ({ shape, fill, rotation, count }));
     odd = { shape, fill, rotation: 45, count: otherCount };
     explanation =
       "Four figures contain the same number of shapes; one contains a different number.";
+    difficulty = 2;
   }
 
   const options = shuffle([...family, odd], rng);
@@ -196,7 +202,7 @@ function oddOneOut(index: number, rng: Rng): Question {
   return {
     id: `vis-odd-${String(index).padStart(3, "0")}`,
     category: "pattern",
-    difficulty: 2,
+    difficulty,
     prompt: "Which figure does not belong with the others?",
     answer: {
       kind: "glyph-choice",
@@ -241,11 +247,32 @@ function mentalRotation(index: number, rng: Rng): Question {
 function build(): Question[] {
   const rng = createRng(0x4d4f4455); // "MODU" — fixed so the bank never shifts
   const out: Question[] = [];
-  for (let i = 1; i <= 8; i++) out.push(rotationMatrix(i, rng));
-  for (let i = 1; i <= 6; i++) out.push(countMatrix(i, rng));
-  for (let i = 1; i <= 6; i++) out.push(fillMatrix(i, rng));
-  for (let i = 1; i <= 10; i++) out.push(oddOneOut(i, rng));
-  for (let i = 1; i <= 10; i++) out.push(mentalRotation(i, rng));
+  const seen = new Set<string>();
+
+  // Random generation can land on the same figure twice. Rather than trusting it
+  // not to, discard repeats and draw again — a duplicate would be served as if it
+  // were a fresh question.
+  const take = (make: (index: number, rng: Rng) => Question, count: number) => {
+    let made = 0;
+    for (let attempt = 0; made < count && attempt < count * 50; attempt++) {
+      const question = make(made + 1, rng);
+      const signature = [
+        question.prompt,
+        JSON.stringify(question.stimulus ?? ""),
+        JSON.stringify(question.answer),
+      ].join("::");
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      out.push(question);
+      made += 1;
+    }
+  };
+
+  take(rotationMatrix, 14);
+  take(countMatrix, 10);
+  take(fillMatrix, 10);
+  take(oddOneOut, 16);
+  take(mentalRotation, 16);
   return out;
 }
 

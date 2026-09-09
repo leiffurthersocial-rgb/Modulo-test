@@ -17,8 +17,9 @@ function OptionShell({
   return (
     <button
       type="button"
+      role="radio"
       onClick={onClick}
-      aria-pressed={selected}
+      aria-checked={selected}
       className={`group flex w-full items-center gap-3.5 rounded-xl border p-3.5 text-left transition-colors ${
         selected
           ? "border-sand-500 bg-sand-500/10"
@@ -128,12 +129,13 @@ export function QuestionView({
             />
           </div>
         ) : question.answer.kind === "glyph-choice" ? (
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+          <div role="radiogroup" aria-label="Answer options" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
             {question.answer.options.map((glyph, index) => (
               <button
                 key={index}
                 type="button"
-                aria-pressed={value === index}
+                role="radio"
+                aria-checked={value === index}
                 aria-label={`Option ${letters[index]}`}
                 onClick={() => onChange(value === index ? null : index)}
                 className={`flex flex-col items-center gap-2 rounded-xl border p-3 transition-colors ${
@@ -148,7 +150,7 @@ export function QuestionView({
             ))}
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div role="radiogroup" aria-label="Answer options" className="space-y-2.5">
             {question.answer.options.map((option, index) => (
               <OptionShell
                 key={index}

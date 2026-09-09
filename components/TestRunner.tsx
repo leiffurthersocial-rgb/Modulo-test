@@ -165,6 +165,8 @@ export function TestRunner({ test }: { test: TestDefinition }) {
     [index, persist, questions, session],
   );
 
+  const goRef = useRef<(delta: number) => void>(() => {});
+
   const go = useCallback(
     (delta: number) => {
       if (!session) return;
@@ -175,6 +177,62 @@ export function TestRunner({ test }: { test: TestDefinition }) {
     },
     [index, persist, questions.length, session],
   );
+
+  goRef.current = go;
+
+  // Keyboard control. Number keys choose an option, arrows move between
+  // questions, Enter advances — so a full paper can be answered without a mouse.
+  useEffect(() => {
+    if (phase !== "running") return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const question = questions[index];
+      if (!question) return;
+
+      // Inside a text field the arrows and digits belong to the field. Enter
+      // still advances, which is what someone typing an answer expects.
+      const target = event.target as HTMLElement | null;
+      const inField =
+        !!target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+      if (inField) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          target.blur();
+          if (index === questions.length - 1) setPhase("review");
+          else goRef.current(1);
+        }
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goRef.current(-1);
+        return;
+      }
+      if (event.key === "ArrowRight" || event.key === "Enter") {
+        event.preventDefault();
+        if (index === questions.length - 1) setPhase("review");
+        else goRef.current(1);
+        return;
+      }
+
+      if (question.answer.kind === "numeric") return;
+      const optionCount = question.answer.options.length;
+      const digit = Number(event.key);
+      if (Number.isInteger(digit) && digit >= 1 && digit <= optionCount) {
+        event.preventDefault();
+        answer(digit - 1);
+        return;
+      }
+      const letter = event.key.toLowerCase().charCodeAt(0) - 97;
+      if (event.key.length === 1 && letter >= 0 && letter < optionCount) {
+        event.preventDefault();
+        answer(letter);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [answer, index, phase, questions]);
 
   /* ------------------------------------------------------------ intro */
 
@@ -211,6 +269,7 @@ export function TestRunner({ test }: { test: TestDefinition }) {
             <li>· Correct answers and explanations stay hidden until you submit.</li>
             <li>· Your progress is saved in this browser, so you can close the tab and resume.</li>
             <li>· Questions are drawn at random, and ones you have already seen are avoided.</li>
+            <li>· Keyboard shortcuts: number keys select an answer, arrow keys move between questions.</li>
           </ul>
         </Card>
 
@@ -348,13 +407,41 @@ export function TestRunner({ test }: { test: TestDefinition }) {
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setPhase("review")}
-        className="mt-6 text-[12.5px] text-fog-400 underline underline-offset-4 hover:text-fog-200"
-      >
-        Jump to review &amp; submit
-      </button>
+      <div className="mt-7 flex flex-wrap gap-1.5" aria-hidden="true">
+        {questions.map((q, i) => {
+          const done = (session.responses[q.id] ?? null) !== null;
+          return (
+            <button
+              key={q.id}
+              type="button"
+              onClick={() => go(i - index)}
+              title={`Question ${i + 1}${done ? " — answered" : ""}`}
+              className={`h-1.5 w-6 rounded-full transition-colors ${
+                i === index
+                  ? "bg-sand-400"
+                  : done
+                    ? "bg-ink-500 hover:bg-ink-600"
+                    : "bg-ink-800 hover:bg-ink-700"
+              }`}
+            />
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <button
+          type="button"
+          onClick={() => setPhase("review")}
+          className="text-[12.5px] text-fog-400 underline underline-offset-4 hover:text-fog-200"
+        >
+          Jump to review &amp; submit
+        </button>
+        <p className="hidden text-[12px] text-fog-400 sm:block">
+          Keyboard: <span className="text-fog-300">1–9</span> to answer,{" "}
+          <span className="text-fog-300">← →</span> to move,{" "}
+          <span className="text-fog-300">Enter</span> to continue
+        </p>
+      </div>
     </div>
   );
 }

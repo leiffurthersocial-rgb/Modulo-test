@@ -25,6 +25,16 @@ export function questionsByCategory(category: Category): Question[] {
   return QUESTION_BANK.filter((q) => q.category === category);
 }
 
+/** Content fingerprint: two questions with the same signature are the same question. */
+export function questionSignature(question: Question): string {
+  const normalise = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return [
+    normalise(question.prompt),
+    normalise(JSON.stringify(question.stimulus ?? "")),
+    normalise(JSON.stringify(question.answer)),
+  ].join("::");
+}
+
 export interface BankIssue {
   id: string;
   problem: string;
@@ -75,6 +85,21 @@ export function validateBank(bank: readonly Question[] = QUESTION_BANK): BankIss
       if (q.stimulus.cells.filter((c) => c === null).length !== 1) {
         issues.push({ id: q.id, problem: "matrix must have exactly one blank cell" });
       }
+    }
+  }
+
+  // A question is a duplicate only when its prompt, stimulus AND options all
+  // match: odd-one-out items legitimately share a prompt and differ only in the
+  // figures. A true duplicate would let a taker answer from memory while the
+  // selector believed it had served something new.
+  const prompts = new Map<string, string>();
+  for (const q of bank) {
+    const key = questionSignature(q);
+    const existing = prompts.get(key);
+    if (existing) {
+      issues.push({ id: q.id, problem: `duplicate of ${existing}` });
+    } else {
+      prompts.set(key, q.id);
     }
   }
 

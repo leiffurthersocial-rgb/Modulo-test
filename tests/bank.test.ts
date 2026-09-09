@@ -61,3 +61,43 @@ describe("question bank", () => {
     }
   });
 });
+
+describe("bank validation catches real problems", () => {
+  const base = QUESTION_BANK[0] as Question;
+
+  it("flags a duplicate id", () => {
+    const issues = validateBank([base, { ...base }]);
+    expect(issues.some((i) => i.problem === "duplicate id")).toBe(true);
+  });
+
+  it("flags an identical question served under a new id", () => {
+    const issues = validateBank([base, { ...base, id: "clone-1" }]);
+    expect(issues.some((i) => i.problem.startsWith("duplicate of"))).toBe(true);
+  });
+
+  it("allows questions that share a prompt but differ in their options", () => {
+    const oddOneOut = QUESTION_BANK.filter((q) =>
+      q.prompt.startsWith("Which figure does not belong"),
+    );
+    expect(oddOneOut.length).toBeGreaterThan(4);
+    expect(validateBank(oddOneOut)).toEqual([]);
+  });
+
+  it("flags an out-of-range correct answer", () => {
+    const broken: Question = {
+      ...base,
+      id: "broken-1",
+      answer: { kind: "choice", options: ["a", "b", "c"], correctIndex: 9 },
+    };
+    expect(validateBank([broken]).some((i) => i.problem === "correctIndex out of range")).toBe(true);
+  });
+
+  it("flags repeated answer options", () => {
+    const broken: Question = {
+      ...base,
+      id: "broken-2",
+      answer: { kind: "choice", options: ["same", "same", "other"], correctIndex: 0 },
+    };
+    expect(validateBank([broken]).some((i) => i.problem === "duplicate answer options")).toBe(true);
+  });
+});

@@ -86,8 +86,13 @@ describe("selectQuestions", () => {
 
   it("reports partial novelty when the pool is only partly used up", () => {
     const pool = QUESTION_BANK.filter((q) => q.category === "logical");
-    const seen = Object.fromEntries(pool.slice(0, 20).map((q) => [q.id, 1]));
+    // Leave fewer fresh questions than the test needs, so it must recycle some.
+    const freshLeft = Math.floor(logic.questionCount / 2);
+    const seen = Object.fromEntries(
+      pool.slice(0, pool.length - freshLeft).map((q) => [q.id, 1]),
+    );
     const result = selectQuestions({ test: logic, seen, rng: createRng(42) });
+    expect(result.noveltyRatio).toBeCloseTo(freshLeft / logic.questionCount, 5);
     expect(result.noveltyRatio).toBeGreaterThan(0);
     expect(result.noveltyRatio).toBeLessThan(1);
   });
@@ -105,5 +110,26 @@ describe("selectQuestions", () => {
     const { questions } = selectQuestions({ test: tiny, rng: createRng(61) });
     const pool = QUESTION_BANK.filter((q) => q.category === "logical").length;
     expect(questions).toHaveLength(pool);
+  });
+});
+
+describe("test catalogue", () => {
+  it("keeps every test inside the bank's capacity per difficulty shape", () => {
+    for (const test of TESTS) {
+      const result = selectQuestions({ test, rng: createRng(101) });
+      expect(result.questions, test.id).toHaveLength(test.questionCount);
+    }
+  });
+
+  it("makes the challenge test harder than the standard one", () => {
+    const hard = getTest("challenge")!;
+    const standard = getTest("standard")!;
+    const mean = (id: string) => {
+      const test = getTest(id)!;
+      const { questions } = selectQuestions({ test, rng: createRng(202) });
+      return questions.reduce((s, q) => s + q.difficulty, 0) / questions.length;
+    };
+    expect(hard.questionCount).toBeGreaterThan(standard.questionCount);
+    expect(mean("challenge")).toBeGreaterThan(mean("standard"));
   });
 });

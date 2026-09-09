@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { TrendChart } from "./TrendChart";
 import { Button, ButtonLink, Card, Disclaimer, Eyebrow, Meter } from "./ui";
 import { stableCategoryScores, stableEstimate, type AttemptSummary } from "@/lib/iq/stable";
 import { CATEGORY_LABELS, type Category } from "@/lib/iq/types";
@@ -137,6 +138,18 @@ export function HistoryView() {
               instead of climbing.
             </p>
           </div>
+
+          {chronological.length > 1 ? (
+            <div className="mt-7 border-t border-ink-800 pt-6">
+              <p className="text-[12px] uppercase tracking-[0.14em] text-fog-400">
+                Attempts over time
+              </p>
+              <TrendChart
+                stable={stable.iq}
+                scores={chronological.map((a) => ({ iq: a.iq, label: a.testName }))}
+              />
+            </div>
+          ) : null}
 
           {Object.keys(domains).length > 0 ? (
             <div className="mt-7 border-t border-ink-800 pt-6">
