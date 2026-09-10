@@ -133,3 +133,37 @@ describe("test catalogue", () => {
     expect(mean("challenge")).toBeGreaterThan(mean("standard"));
   });
 });
+
+describe("domain coverage outranks novelty", () => {
+  it("still samples a category whose questions have all been served", () => {
+    // Otherwise a small or exhausted domain silently disappears from a
+    // full-spectrum paper, and the per-domain breakdown goes with it.
+    const verbal = QUESTION_BANK.filter((q) => q.category === "verbal");
+    const seen = Object.fromEntries(verbal.map((q) => [q.id, 4]));
+    for (const seedValue of [1, 2, 3, 4, 5]) {
+      const { questions } = selectQuestions({
+        test: standard,
+        seen,
+        rng: createRng(seedValue),
+      });
+      const categories = new Set(questions.map((q) => q.category));
+      expect(categories.size, `seed ${seedValue}: ${[...categories].join(", ")}`).toBe(5);
+    }
+  });
+
+  it("records the repetition in the novelty ratio rather than hiding it", () => {
+    const verbal = QUESTION_BANK.filter((q) => q.category === "verbal");
+    const seen = Object.fromEntries(verbal.map((q) => [q.id, 4]));
+    const result = selectQuestions({ test: standard, seen, rng: createRng(9) });
+    expect(result.noveltyRatio).toBeLessThan(1);
+    expect(result.noveltyRatio).toBeGreaterThan(0);
+  });
+
+  it("still prefers unseen questions inside the requested domain", () => {
+    const logical = QUESTION_BANK.filter((q) => q.category === "logical");
+    const seen = Object.fromEntries(logical.slice(0, 20).map((q) => [q.id, 2]));
+    const { questions } = selectQuestions({ test: logic, seen, rng: createRng(12) });
+    const repeats = questions.filter((q) => seen[q.id]).length;
+    expect(repeats).toBe(0);
+  });
+});

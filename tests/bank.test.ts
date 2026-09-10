@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { QUESTION_BANK, bankCoverage, validateBank } from "@/lib/iq/bank";
-import { TESTS } from "@/lib/iq/tests";
+import { TESTS, getTest } from "@/lib/iq/tests";
 import { CATEGORIES, isCorrect, type Question } from "@/lib/iq/types";
 
 describe("question bank", () => {
@@ -99,5 +99,80 @@ describe("bank validation catches real problems", () => {
       answer: { kind: "choice", options: ["same", "same", "other"], correctIndex: 0 },
     };
     expect(validateBank([broken]).some((i) => i.problem === "duplicate answer options")).toBe(true);
+  });
+});
+
+describe("language accessibility", () => {
+  /**
+   * Words whose meaning the taker would have to already know for the item to be
+   * answerable. Every one of these was in the bank at some point; the list
+   * exists so they cannot quietly come back.
+   */
+  const RARE_VOCABULARY = [
+    "ephemeral", "laconic", "obfuscate", "intransigent", "sanguine",
+    "perfunctory", "assiduous", "ostensible", "equivocate", "meticulous",
+    "tacit", "ubiquitous", "recalcitrant", "pellucid", "inchoate",
+    "ameliorate", "gregarious", "candid", "prudent", "stingy", "innate",
+    "verbose", "derivative", "tenuous", "circumstantial", "scaffolding",
+    "nurture", "insomnia", "impotent",
+  ];
+
+  /** Formats whose answer is a definition rather than a relationship. */
+  const VOCABULARY_FORMATS = [
+    /most nearly means/i,
+    /closest in meaning to/i,
+    /means the opposite of/i,
+    /opposite of ['"]/i,
+    /to ['"]\w+['"] is to:/i,
+  ];
+
+  it("asks no question whose answer is the meaning of a rare word", () => {
+    for (const q of QUESTION_BANK) {
+      const text = [q.prompt, ...(q.answer.kind === "choice" ? q.answer.options : [])]
+        .join(" ")
+        .toLowerCase();
+      for (const word of RARE_VOCABULARY) {
+        expect(text.includes(word), `${q.id} uses "${word}"`).toBe(false);
+      }
+    }
+  });
+
+  it("asks no pure vocabulary-definition question", () => {
+    for (const q of QUESTION_BANK) {
+      for (const format of VOCABULARY_FORMATS) {
+        expect(format.test(q.prompt), `${q.id}: ${q.prompt}`).toBe(false);
+      }
+    }
+  });
+
+  it("has no anagram or English-word-initial item", () => {
+    // Neither can be solved without English, whatever the reasoning behind it.
+    for (const q of QUESTION_BANK) {
+      expect(/rearranged to spell/i.test(q.prompt), q.id).toBe(false);
+      const series =
+        q.stimulus?.kind === "text-sequence" ? q.stimulus.items.join("") : "";
+      for (const banned of ["OTTFFSS", "JFMAMJJ", "SMTW"]) {
+        expect(series.startsWith(banned), `${q.id} series ${series}`).toBe(false);
+      }
+    }
+  });
+
+  it("keeps the verbal items short enough to read in a second language", () => {
+    const verbal = QUESTION_BANK.filter((q) => q.category === "verbal");
+    for (const q of verbal) {
+      expect(q.prompt.split(/\s+/).length, `${q.id}: ${q.prompt}`).toBeLessThan(45);
+      if (q.answer.kind === "choice") {
+        for (const option of q.answer.options) {
+          expect(option.split(/\s+/).length, `${q.id}: "${option}"`).toBeLessThan(12);
+        }
+      }
+    }
+  });
+
+  it("still has enough verbal items, spread across the difficulty levels", () => {
+    const verbal = QUESTION_BANK.filter((q) => q.category === "verbal");
+    expect(verbal.length).toBeGreaterThanOrEqual(getTest("verbal")!.questionCount);
+    const levels = new Set(verbal.map((q) => q.difficulty));
+    expect(levels.size).toBe(5);
   });
 });

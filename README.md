@@ -22,7 +22,7 @@ defaults.
 
 - **8 IQ tests** — Quick, Standard and Challenge (full-spectrum) plus focused Logic,
   Pattern, Numerical, Spatial and Verbal tests.
-- **276 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
+- **257 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
   five formats: multiple choice, free numeric entry, symbolic series, 3×3 abstract
   matrices and figure choice. Visual items are generated from explicit rules with a fixed
   seed, so every figure has a provably unique answer and never shifts between renders.
@@ -46,6 +46,21 @@ Scoring is pure and framework-free, which is what makes it testable:
 | `lib/iq/stable.ts` | Combining repeat attempts |
 | `lib/personality/` | Items, traits, archetypes, cosine matching |
 | `lib/storage.ts` | Versioned, defensively-parsed localStorage layer |
+
+### Language accessibility
+
+The bank is taken by people who don't have English as a first language, so items whose answer
+turns on knowing a rare English word were removed rather than made easier — they measure
+exposure to English under a label that says "reasoning". That took out 21 vocabulary
+definitions (*"'perfunctory' most nearly means…"*), 4 anagrams, and 3 pattern series built on
+English word-initials (`O T T F F S S`, month and weekday initials).
+
+Verbal reasoning is now relationship-based, using words a B1 learner knows: analogies,
+relationship matching, classification, part/whole and sign/cause. Difficulty comes from how
+abstract the *relationship* is, not how rare the words are — `word : sentence :: note : melody`
+is hard because it asks you to see one structure in two domains, and every word in it is
+common. Tests enforce this: a blocklist of the removed terms, a ban on definition formats and
+anagrams, and a cap on option length so no answer is a long English sentence.
 
 ### The adaptive test
 

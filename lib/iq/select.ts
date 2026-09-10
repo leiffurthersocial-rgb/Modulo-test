@@ -91,9 +91,14 @@ export function selectQuestions(options: {
       if (used.has(candidate.id)) continue;
       const seenCount = seen[candidate.id] ?? 0;
       const categoryMiss = wantedCategory && candidate.category !== wantedCategory ? 1 : 0;
+      // The domain a slot asks for outranks novelty. If it did not, a category
+      // whose items had all been served would simply vanish from a
+      // full-spectrum paper — every unseen item from another domain would score
+      // better — taking the per-domain breakdown with it. Repeating a question
+      // is the lesser cost, and the attempt's novelty ratio already records it.
       const score =
+        categoryMiss * 100000 +
         seenCount * 1000 +
-        categoryMiss * 100 +
         Math.abs(candidate.difficulty - wantedDifficulty) * 10 +
         rng();
       if (score < bestScore) {

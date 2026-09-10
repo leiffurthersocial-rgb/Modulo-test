@@ -1,5 +1,14 @@
 import type { Question } from "../types";
 
+/**
+ * Pattern items must be solvable without English. Series built on the initials
+ * of English number words, month names or weekday names were removed for that
+ * reason: they test whether you speak the language, not whether you can see a
+ * rule. Letter series over the Latin alphabet are kept, because the rule is
+ * positional — you only need to know the order of the letters, not their
+ * meaning.
+ */
+
 const c = (options: string[], correctIndex: number) =>
   ({ kind: "choice", options, correctIndex }) as const;
 const seq = (...items: (string | number)[]) =>
@@ -74,16 +83,6 @@ export const patternTextQuestions: Question[] = [
       "Each term describes the one before it aloud: 111221 is 'three ones, two twos, one one' = 312211.",
   },
   {
-    id: "pat-008",
-    category: "pattern",
-    difficulty: 5,
-    prompt: "Which letter continues the series?",
-    stimulus: seq("O", "T", "T", "F", "F", "S", "S", "?"),
-    answer: c(["E", "N", "T", "O"], 0),
-    explanation:
-      "These are the first letters of One, Two, Three, Four, Five, Six, Seven — so Eight comes next.",
-  },
-  {
     id: "pat-009",
     category: "pattern",
     difficulty: 4,
@@ -110,25 +109,6 @@ export const patternTextQuestions: Question[] = [
     stimulus: seq("AB", "BC", "CD", "DE", "?"),
     answer: c(["EF", "EG", "DF", "FG"], 0),
     explanation: "Each pair steps one letter forward.",
-  },
-  {
-    id: "pat-012",
-    category: "pattern",
-    difficulty: 3,
-    prompt: "Which item is missing from the middle of the series?",
-    stimulus: seq("J", "F", "M", "?", "M", "J", "J"),
-    answer: c(["A", "S", "T", "D"], 0),
-    explanation:
-      "The first letters of the months: January, February, March, April, May, June, July.",
-  },
-  {
-    id: "pat-013",
-    category: "pattern",
-    difficulty: 3,
-    prompt: "Which letter continues the series?",
-    stimulus: seq("S", "M", "T", "W", "?"),
-    answer: c(["T", "F", "S", "M"], 0),
-    explanation: "The initials of the days of the week: Sunday, Monday, Tuesday, Wednesday, Thursday.",
   },
   {
     id: "pat-014",
