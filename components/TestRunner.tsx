@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { QuestionView } from "./QuestionView";
 import { Button, ButtonLink, Card, Eyebrow } from "./ui";
 import { getQuestion } from "@/lib/iq/bank";
+import { presentQuestions } from "@/lib/iq/present";
 import { scoreAttempt } from "@/lib/iq/scoring";
 import { selectQuestions } from "@/lib/iq/select";
 import type { TestDefinition } from "@/lib/iq/tests";
@@ -47,11 +48,15 @@ export function TestRunner({ test }: { test: TestDefinition }) {
     }
   }, [test.id]);
 
+  // Options are shuffled per attempt, so the correct answer is equally likely
+  // to be A, B, C or D and moves between retakes. Everything downstream — the
+  // recorded responses, the scoring, the review — uses this presented order.
   const questions = useMemo<Question[]>(() => {
     if (!session) return [];
-    return session.questionIds
+    const picked = session.questionIds
       .map((id) => getQuestion(id))
       .filter((q): q is Question => Boolean(q));
+    return presentQuestions(picked, session.seed);
   }, [session]);
 
   const secondsLeft =
@@ -73,6 +78,7 @@ export function TestRunner({ test }: { test: TestDefinition }) {
           id,
           testId: test.id,
           testName: test.name,
+          seed: active.seed,
           completedAt: Date.now(),
           durationSec: Math.round((Date.now() - active.startedAt) / 1000),
           iq: score.iq,

@@ -65,6 +65,17 @@ novelty (share of questions never served before, floored at 0.35), and a practic
 attempt order. So 115 → 121 → 118 settles at 118, and a fourth 145 built from recycled
 questions barely moves it.
 
+### Answer position
+
+Questions are authored with the correct option written first — readable for maintenance,
+useless for a taker, since it would put the answer at A every time (it did: all 146
+hand-authored multiple-choice items). Options are therefore shuffled per attempt, keyed to
+the attempt seed, so the answer lands in each position about equally often *and* moves
+between retakes, making a remembered position worthless. The order is derived from
+`(question id, attempt seed)` rather than stored, so the runner and the review agree without
+persisting a permutation per question; attempts saved before this existed have no seed and
+fall back to the authored order, so their reviews still line up.
+
 ### Repeat protection
 
 Every served question id is recorded. The selector ranks unseen questions ahead of seen

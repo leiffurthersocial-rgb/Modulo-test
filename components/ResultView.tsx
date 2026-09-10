@@ -6,6 +6,7 @@ import { GlyphFigure } from "./GlyphFigure";
 import { ScoreDial } from "./ScoreDial";
 import { ButtonLink, Card, Disclaimer, Eyebrow, Meter } from "./ui";
 import { getQuestion } from "@/lib/iq/bank";
+import { presentQuestion } from "@/lib/iq/present";
 import { BAND_BLURBS, DISCLAIMER, type Band } from "@/lib/iq/scoring";
 import { stableEstimate, type AttemptSummary } from "@/lib/iq/stable";
 import { CATEGORY_LABELS, isCorrect } from "@/lib/iq/types";
@@ -47,7 +48,12 @@ export function ResultView({ attemptId }: { attemptId: string }) {
     );
   }
 
-  const questions = attempt.questionIds.map((id) => getQuestion(id));
+  // Rebuild the order the questions were shown in, so "your answer" points at
+  // the option the taker actually chose.
+  const questions = attempt.questionIds.map((id) => {
+    const question = getQuestion(id);
+    return question ? presentQuestion(question, attempt.seed) : undefined;
+  });
   const index = history.findIndex((a) => a.id === attempt.id);
   const attemptNumber = index >= 0 ? index + 1 : history.length;
 

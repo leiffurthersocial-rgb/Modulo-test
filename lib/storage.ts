@@ -18,6 +18,8 @@ export interface StoredIqAttempt {
   id: string;
   testId: string;
   testName: string;
+  /** Attempt seed; also fixes the option order shown for each question. */
+  seed?: number;
   completedAt: number;
   durationSec: number;
   iq: number;
