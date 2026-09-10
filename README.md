@@ -47,6 +47,27 @@ Scoring is pure and framework-free, which is what makes it testable:
 | `lib/personality/` | Items, traits, archetypes, cosine matching |
 | `lib/storage.ts` | Versioned, defensively-parsed localStorage layer |
 
+### The adaptive test
+
+An item only carries information about ability near its own difficulty, so a fixed paper
+spends most of its questions in the wrong place. The Adaptive Test re-estimates ability after
+every answer and asks next whichever unseen item is most informative at that estimate,
+stopping when the standard error hits its target or at 24 questions.
+
+Simulated against takers of known ability (`tests/adaptive.test.ts` asserts these hold):
+
+| True ability | Adaptive error | Fixed 12-item error |
+| --- | --- | --- |
+| 90 | 3.6 | 5.4 |
+| 110 | ~4 | ~6 |
+| 130 | 4.6 | 12.3 |
+| 145 | 6.7 | 22.8 |
+
+The gap widens at the top because a fixed paper runs out of hard items. Coverage is balanced
+as it goes — pure information-maximising would serve one domain repeatedly — so all five
+domains are always sampled. The trade is no back-navigation: changing an earlier answer would
+invalidate everything chosen after it.
+
 ### Scoring is not percentage correct
 
 Each item carries a difficulty threshold on the IQ scale (level 1 → 82 … level 5 → 130).
@@ -56,6 +77,18 @@ logistic with a guessing term set from the number of options. Hard items therefo
 the estimate more than easy ones, and a one-in-four guess counts for less than a free
 numeric entry. Extreme patterns are pulled toward the population mean, and each result
 ships with a standard error and a 68% interval.
+
+### Range and confidence
+
+The reportable range is **45–170**. It is deliberately wider at the top than a short fixed
+test can resolve — that is what the adaptive test is for. The bottom is blunt for a structural
+reason: with four-option items a taker who knows nothing still scores ~25%, so very low
+abilities cannot be separated and estimates there sit nearer 60 than the floor.
+
+Confidence is the estimate's **classical reliability**, `1 − SE²/SD²` — the share of the
+reported score reflecting ability rather than noise — reduced by unanswered and by recycled
+questions. An SE of 3.5 (a good full-length paper) scores ~95, which is what a test of that
+precision genuinely is.
 
 ### Retakes settle rather than inflate
 

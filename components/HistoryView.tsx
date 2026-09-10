@@ -229,11 +229,11 @@ export function HistoryView() {
               const weight = weightById.get(attempt.id) ?? 0;
               const conf = attemptConfidence(attempt);
               const confTone =
-                conf.percent >= 72
+                conf.percent >= 88
                   ? "border-jade-500/40 bg-jade-500/10 text-jade-400"
-                  : conf.percent >= 55
+                  : conf.percent >= 72
                     ? "border-jade-500/30 bg-jade-500/5 text-jade-400"
-                    : conf.percent >= 38
+                    : conf.percent >= 50
                       ? "border-sand-500/40 bg-sand-500/10 text-sand-400"
                       : "border-red-900/60 bg-red-950/25 text-red-300";
               return (

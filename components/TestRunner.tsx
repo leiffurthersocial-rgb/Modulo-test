@@ -4,12 +4,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QuestionView } from "./QuestionView";
 import { Button, ButtonLink, Card, Eyebrow } from "./ui";
-import { getQuestion } from "@/lib/iq/bank";
+import { QUESTION_BANK, getQuestion } from "@/lib/iq/bank";
+import {
+  adaptiveOpening,
+  adaptiveShouldStop,
+  estimateFromResponses,
+  selectAdaptiveQuestion,
+} from "@/lib/iq/adaptive";
 import { presentQuestions } from "@/lib/iq/present";
 import { scoreAttempt } from "@/lib/iq/scoring";
 import { selectQuestions } from "@/lib/iq/select";
 import type { TestDefinition } from "@/lib/iq/tests";
-import { CATEGORY_LABELS, type Question, type ResponseValue } from "@/lib/iq/types";
+import {
+  CATEGORY_LABELS,
+  type Category,
+  type Question,
+  type ResponseValue,
+} from "@/lib/iq/types";
 import { createRng, randomSeed } from "@/lib/rng";
 import {
   addAttempt,
@@ -127,11 +138,14 @@ export function TestRunner({ test }: { test: TestDefinition }) {
     setError(null);
     try {
       const seed = randomSeed();
-      const { questions: picked, noveltyRatio } = selectQuestions({
-        test,
-        seen: loadStore().seen,
-        rng: createRng(seed),
-      });
+      const seen = loadStore().seen;
+      const fixed = test.adaptive
+        ? null
+        : selectQuestions({ test, seen, rng: createRng(seed) });
+      const picked: Question[] = fixed
+        ? fixed.questions
+        : adaptiveOpening(test, seen, createRng(seed));
+      const noveltyRatio = fixed ? fixed.noveltyRatio : 1;
       if (picked.length === 0) {
         setError("No questions are available for this test right now.");
         return;
@@ -174,6 +188,41 @@ export function TestRunner({ test }: { test: TestDefinition }) {
 
   const goRef = useRef<(delta: number) => void>(() => {});
 
+  /**
+   * Choose and append the next adaptive question from how the previous ones
+   * went. Called instead of simply moving forward, so the paper is built as it
+   * is taken rather than up front.
+   */
+  const extendAdaptive = useCallback(
+    (active: ActiveIqSession, list: Question[]) => {
+      const state = estimateFromResponses(list, active.responses);
+      if (adaptiveShouldStop(state, test)) {
+        setPhase("review");
+        return;
+      }
+      const pool = QUESTION_BANK.filter((q) => test.categories.includes(q.category));
+      const next = selectAdaptiveQuestion({
+        pool,
+        usedIds: new Set(active.questionIds),
+        ability: state.ability,
+        seen: loadStore().seen,
+        rng: createRng(active.seed + list.length * 7919),
+        asked: list.map((q) => q.category as Category),
+        categories: test.categories,
+      });
+      if (!next) {
+        setPhase("review");
+        return;
+      }
+      markSeen([next.id]);
+      const nextIndex = active.questionIds.length;
+      setIndex(nextIndex);
+      persist({ ...active, questionIds: [...active.questionIds, next.id], index: nextIndex });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [persist, test],
+  );
+
   const go = useCallback(
     (delta: number) => {
       if (!session) return;
@@ -205,19 +254,30 @@ export function TestRunner({ test }: { test: TestDefinition }) {
         if (event.key === "Enter") {
           event.preventDefault();
           target.blur();
-          if (index === questions.length - 1) setPhase("review");
+          if (test.adaptive) {
+            if (session && (session.responses[question.id] ?? null) !== null) {
+              extendAdaptive(session, questions);
+            }
+          } else if (index === questions.length - 1) setPhase("review");
           else goRef.current(1);
         }
         return;
       }
 
       if (event.key === "ArrowLeft") {
+        if (test.adaptive) return;
         event.preventDefault();
         goRef.current(-1);
         return;
       }
       if (event.key === "ArrowRight" || event.key === "Enter") {
         event.preventDefault();
+        if (test.adaptive) {
+          if (session && (session.responses[question.id] ?? null) !== null) {
+            extendAdaptive(session, questions);
+          }
+          return;
+        }
         if (index === questions.length - 1) setPhase("review");
         else goRef.current(1);
         return;
@@ -239,7 +299,7 @@ export function TestRunner({ test }: { test: TestDefinition }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [answer, index, phase, questions]);
+  }, [answer, extendAdaptive, index, phase, questions, session, test.adaptive]);
 
   /* ------------------------------------------------------------ intro */
 
@@ -256,7 +316,9 @@ export function TestRunner({ test }: { test: TestDefinition }) {
           <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3">
             <div>
               <dt className="text-[11px] uppercase tracking-[0.14em] text-fog-400">Questions</dt>
-              <dd className="tabular mt-1 text-xl font-semibold text-fog-100">{test.questionCount}</dd>
+              <dd className="tabular mt-1 text-xl font-semibold text-fog-100">
+                {test.adaptive ? `${test.minQuestions ?? 10}–${test.questionCount}` : test.questionCount}
+              </dd>
             </div>
             <div>
               <dt className="text-[11px] uppercase tracking-[0.14em] text-fog-400">Time limit</dt>
@@ -272,10 +334,24 @@ export function TestRunner({ test }: { test: TestDefinition }) {
             </div>
           </dl>
           <ul className="mt-6 space-y-2 border-t border-ink-800 pt-5 text-[13px] leading-relaxed text-fog-300">
-            <li>· You can move backwards and forwards, and change any answer before submitting.</li>
+            {test.adaptive ? (
+              <li>
+                · Each question is chosen from how the previous ones went, so you cannot go back
+                — changing an earlier answer would invalidate everything picked after it.
+              </li>
+            ) : (
+              <li>· You can move backwards and forwards, and change any answer before submitting.</li>
+            )}
             <li>· Correct answers and explanations stay hidden until you submit.</li>
             <li>· Your progress is saved in this browser, so you can close the tab and resume.</li>
-            <li>· Questions are drawn at random, and ones you have already seen are avoided.</li>
+            {test.adaptive ? (
+              <li>
+                · It finishes as soon as the estimate is precise enough — often before the
+                maximum — so a decisive run is a shorter one.
+              </li>
+            ) : (
+              <li>· Questions are drawn at random, and ones you have already seen are avoided.</li>
+            )}
             <li>· Keyboard shortcuts: number keys select an answer, arrow keys move between questions.</li>
           </ul>
         </Card>
@@ -326,7 +402,9 @@ export function TestRunner({ test }: { test: TestDefinition }) {
   }
 
   const answeredCount = Object.entries(session.responses).filter(([, v]) => v !== null).length;
-  const progress = ((index + 1) / questions.length) * 100;
+  const progress = test.adaptive
+    ? Math.min(100, ((index + 1) / test.questionCount) * 100)
+    : ((index + 1) / questions.length) * 100;
   const lowTime = secondsLeft !== null && secondsLeft <= 60;
 
   if (phase === "review") {
@@ -337,11 +415,14 @@ export function TestRunner({ test }: { test: TestDefinition }) {
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-fog-100">Review your paper</h1>
         <p className="mt-3 text-[14.5px] leading-relaxed text-fog-300">
           {answeredCount} of {questions.length} answered.{" "}
-          {unanswered.length > 0
-            ? "Unanswered questions are marked incorrect, so a considered guess is better than a blank."
-            : "Everything is answered."}
+          {test.adaptive
+            ? "The test stopped here because the estimate was precise enough, or because it reached its maximum length."
+            : unanswered.length > 0
+              ? "Unanswered questions are marked incorrect, so a considered guess is better than a blank."
+              : "Everything is answered."}
         </p>
 
+        {test.adaptive ? null : (
         <div className="mt-7 grid grid-cols-6 gap-2 sm:grid-cols-8">
           {questions.map((q, i) => {
             const done = (session.responses[q.id] ?? null) !== null;
@@ -364,10 +445,17 @@ export function TestRunner({ test }: { test: TestDefinition }) {
             );
           })}
         </div>
+        )}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" onClick={() => finish(session, questions)}>Submit and see results</Button>
-          <Button size="lg" variant="secondary" onClick={() => setPhase("running")}>Keep working</Button>
+          <Button size="lg" onClick={() => finish(session, questions)}>
+            Submit and see results
+          </Button>
+          {test.adaptive ? null : (
+            <Button size="lg" variant="secondary" onClick={() => setPhase("running")}>
+              Keep working
+            </Button>
+          )}
         </div>
         {error ? <p className="mt-5 text-[13px] text-red-300">{error}</p> : null}
       </div>
@@ -380,7 +468,10 @@ export function TestRunner({ test }: { test: TestDefinition }) {
         <div>
           <p className="text-[12px] uppercase tracking-[0.14em] text-fog-400">{test.name}</p>
           <p className="tabular mt-1 text-[13px] text-fog-300">
-            Question {index + 1} of {questions.length} · {CATEGORY_LABELS[current.category]}
+            {test.adaptive
+              ? `Question ${index + 1} · up to ${test.questionCount}`
+              : `Question ${index + 1} of ${questions.length}`}{" "}
+            · {CATEGORY_LABELS[current.category]}
           </p>
         </div>
         {secondsLeft !== null ? (
@@ -405,15 +496,31 @@ export function TestRunner({ test }: { test: TestDefinition }) {
       {error ? <p className="mt-5 text-[13px] text-red-300">{error}</p> : null}
 
       <div className="mt-7 flex items-center justify-between gap-3">
-        <Button variant="secondary" onClick={() => go(-1)} disabled={index === 0}>Previous</Button>
-        <p className="tabular hidden text-[12.5px] text-fog-400 sm:block">{answeredCount} answered</p>
-        {index === questions.length - 1 ? (
+        {test.adaptive ? (
+          <p className="text-[12.5px] text-fog-400">Adapting to your answers</p>
+        ) : (
+          <Button variant="secondary" onClick={() => go(-1)} disabled={index === 0}>
+            Previous
+          </Button>
+        )}
+        <p className="tabular hidden text-[12.5px] text-fog-400 sm:block">
+          {answeredCount} answered
+        </p>
+        {test.adaptive ? (
+          <Button
+            onClick={() => session && extendAdaptive(session, questions)}
+            disabled={(session.responses[current.id] ?? null) === null}
+          >
+            Next
+          </Button>
+        ) : index === questions.length - 1 ? (
           <Button onClick={() => setPhase("review")}>Review &amp; submit</Button>
         ) : (
           <Button onClick={() => go(1)}>Next</Button>
         )}
       </div>
 
+      {test.adaptive ? null : (
       <div className="mt-7 flex flex-wrap gap-1.5" aria-hidden="true">
         {questions.map((q, i) => {
           const done = (session.responses[q.id] ?? null) !== null;
@@ -434,18 +541,25 @@ export function TestRunner({ test }: { test: TestDefinition }) {
           );
         })}
       </div>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-        <button
-          type="button"
-          onClick={() => setPhase("review")}
-          className="text-[12.5px] text-fog-400 underline underline-offset-4 hover:text-fog-200"
-        >
-          Jump to review &amp; submit
-        </button>
+        {test.adaptive ? null : (
+          <button
+            type="button"
+            onClick={() => setPhase("review")}
+            className="text-[12.5px] text-fog-400 underline underline-offset-4 hover:text-fog-200"
+          >
+            Jump to review &amp; submit
+          </button>
+        )}
         <p className="hidden text-[12px] text-fog-400 sm:block">
           Keyboard: <span className="text-fog-300">1–9</span> to answer,{" "}
-          <span className="text-fog-300">← →</span> to move,{" "}
+          {test.adaptive ? null : (
+            <>
+              <span className="text-fog-300">← →</span> to move,{" "}
+            </>
+          )}
           <span className="text-fog-300">Enter</span> to continue
         </p>
       </div>

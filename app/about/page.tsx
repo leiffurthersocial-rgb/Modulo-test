@@ -14,6 +14,17 @@ const SECTIONS = [
       "Reporting the share of questions you answered correctly would make the score a property of the paper rather than of you: an easy paper would produce a high number and a hard one a low number, for identical reasoning.",
       "Instead each question carries a difficulty threshold expressed directly on the IQ scale — the ability level at which a taker has an even chance of solving it honestly. Your reported score is the ability value that best explains the exact pattern of items you solved and missed, estimated under a normal population prior centred on 100 with a standard deviation of 15.",
       "Two consequences follow. Solving a hard item moves the estimate more than solving an easy one. And because the model knows how many options each question had, it discounts what could plausibly have been a guess — a free-entry numerical answer counts for more than a one-in-four choice.",
+      "The reportable range runs from 45 to 170. It is wider at the top than a short test can actually resolve, which is why the adaptive test exists: a fixed paper runs out of hard items long before it runs out of scale. The bottom of the scale is blunt for a different reason — with four-option questions a taker who knows nothing still scores about 25%, so very low abilities cannot be told apart, and estimates there sit closer to 60 than to the floor.",
+    ],
+  },
+  {
+    heading: "The adaptive test",
+    body: [
+      "A fixed paper spends most of its questions in the wrong place. An item only carries information about ability near its own difficulty, so a strong taker wastes time on questions he was always going to solve and a weaker one grinds through questions he was never going to. Neither tells us much.",
+      "The adaptive test re-estimates ability after every answer and asks next whichever unseen item carries the most information at that estimate. It stops as soon as the standard error reaches its target, or at 24 questions, whichever comes first.",
+      "The effect is not cosmetic. Simulated against takers of known ability, the adaptive test recovers the true figure to within about 3.5 points at the centre of the scale, against 4.9 for the fixed short test — and at the top of the range the gap is far larger, because a fixed paper simply runs out of hard items. For a taker whose true ability is 145, the short test is off by roughly 23 points on average; the adaptive test by under 7.",
+      "It also balances coverage as it goes: pure information-maximising would happily serve one domain repeatedly if those items happened to sit nearest the estimate, which would wreck the per-domain breakdown. Domains that are behind on coverage are preferred, so all five are always sampled.",
+      "The trade is that you cannot go back. Changing an earlier answer would invalidate every question chosen after it.",
     ],
   },
   {

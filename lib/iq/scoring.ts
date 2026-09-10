@@ -25,20 +25,34 @@ import {
 export const POPULATION_MEAN = 100;
 export const POPULATION_SD = 15;
 
-/** Ability at which a taker has a ~50% genuine chance on an item. */
+/**
+ * Ability at which a taker has a ~50% genuine chance on an item.
+ *
+ * The top of the scale is spread wider than the bottom on purpose. Below about
+ * 100 the items are easy enough that missing them is already informative, while
+ * above it the hardest items have to sit far enough apart to tell a strong
+ * taker from a very strong one — otherwise everyone who solves the hard items
+ * piles up at the same estimate and the prior decides the rest.
+ */
 export const DIFFICULTY_THRESHOLD: Record<Difficulty, number> = {
-  1: 82,
-  2: 94,
+  1: 80,
+  2: 93,
   3: 106,
-  4: 118,
-  5: 130,
+  4: 121,
+  5: 137,
 };
 
 /** Logistic slope, in IQ points. Smaller = sharper items. */
 const SLOPE = 11;
 
-const MIN_ABILITY = 55;
-const MAX_ABILITY = 145;
+/**
+ * Reportable range. Wider than the old 55–145 so that a genuinely strong paper
+ * is not clipped at the top, but still finite: beyond about four standard
+ * deviations there are not enough items in the bank to separate one estimate
+ * from another, and any number reported there would be the prior talking.
+ */
+export const MIN_ABILITY = 45;
+export const MAX_ABILITY = 170;
 
 export function logistic(x: number): number {
   return 1 / (1 + Math.exp(-x));
@@ -76,6 +90,24 @@ export function probabilityCorrect(
 ): number {
   const p = guess + (1 - guess) * logistic((ability - threshold) / SLOPE);
   return Math.min(0.999, Math.max(0.001, p));
+}
+
+/**
+ * Fisher information an item carries about ability at `ability`.
+ *
+ * Peaks slightly above the item's own threshold and falls away fast in both
+ * directions: an item far too easy or far too hard tells you almost nothing.
+ * This is what the adaptive test maximises when choosing what to ask next.
+ */
+export function itemInformation(
+  ability: number,
+  threshold: number,
+  guess: number,
+): number {
+  const p = probabilityCorrect(ability, threshold, guess);
+  const q = 1 - p;
+  if (p <= guess) return 0;
+  return ((q / p) * Math.pow((p - guess) / (1 - guess), 2)) / (SLOPE * SLOPE);
 }
 
 export interface ScoredItem {
@@ -297,14 +329,18 @@ export interface AttemptConfidence {
 /**
  * How much to trust a single attempt's estimate.
  *
- * The standard error already carries most of the answer: it falls as items
- * accumulate and as the response pattern becomes more informative about where
- * ability sits. It is expressed here as a percentage of the population standard
- * deviation, so 0% means the estimate is no better than the population prior
- * and 100% would mean no uncertainty at all. Two things then pull it down that
- * the standard error does not see: questions left blank, which are scored wrong
- * but are not evidence of anything, and a paper built from questions already
- * served, where a correct answer may be recall rather than reasoning.
+ * The figure reported is the estimate's **reliability** in the classical sense,
+ * 1 − (SE² / SD²): the share of the variance in the reported score that
+ * reflects ability rather than measurement noise. An SE equal to the population
+ * SD carries no information and scores 0; an SE of 3.5 points — a good
+ * full-length paper — scores about 95, which is what a test of that precision
+ * genuinely is. This replaces an earlier ad-hoc ratio that understated well
+ * measured attempts.
+ *
+ * Two things then pull it down that the standard error does not see: questions
+ * left blank, which are scored wrong but are not evidence of anything, and a
+ * paper built from questions already served, where a correct answer may be
+ * recall rather than reasoning.
  */
 export function attemptConfidence(attempt: {
   standardError?: number;
@@ -320,14 +356,18 @@ export function attemptConfidence(attempt: {
     attempt.standardError ?? Math.max(1, (attempt.high - attempt.low) / 2),
   );
 
-  const precision = Math.max(0, Math.min(1, 1 - margin / POPULATION_SD));
+  // Classical reliability: 1 − (SE² / SD²).
+  const reliability = Math.max(
+    0,
+    Math.min(1, 1 - (margin * margin) / (POPULATION_SD * POPULATION_SD)),
+  );
   const completeness =
     attempt.answered === undefined || attempt.total === 0
       ? 1
       : attempt.answered / attempt.total;
   const novelty = attempt.noveltyRatio === undefined ? 1 : Math.max(0.4, attempt.noveltyRatio);
 
-  const percent = Math.round(100 * precision * (0.6 + 0.25 * completeness + 0.15 * novelty));
+  const percent = Math.round(100 * reliability * (0.75 + 0.15 * completeness + 0.1 * novelty));
 
   const reasons: string[] = [];
   if (attempt.total < 15) {
@@ -346,7 +386,7 @@ export function attemptConfidence(attempt: {
   }
 
   const label: AttemptConfidence["label"] =
-    percent >= 72 ? "high" : percent >= 55 ? "good" : percent >= 38 ? "moderate" : "low";
+    percent >= 88 ? "high" : percent >= 72 ? "good" : percent >= 50 ? "moderate" : "low";
 
   return {
     percent: Math.max(0, Math.min(100, percent)),
