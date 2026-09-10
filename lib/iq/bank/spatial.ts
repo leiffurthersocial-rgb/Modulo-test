@@ -273,4 +273,133 @@ export const spatialTextQuestions: Question[] = [
     answer: c(["The face that started on top", "The face that started in front", "The face that started underneath", "The face that started behind"], 0),
     explanation: "Four quarter-turns about the same axis is a full revolution, returning every face to its starting position.",
   },
+  {
+    id: "spa-031",
+    category: "spatial",
+    difficulty: 1,
+    prompt: "How many sides does a hexagon have?",
+    answer: n(6),
+    explanation: "Hexa- means six.",
+  },
+  {
+    id: "spa-032",
+    category: "spatial",
+    difficulty: 1,
+    prompt: "You are facing north and turn 90° to your right. Which way are you facing?",
+    answer: c(["East", "West", "South", "North"], 0),
+    explanation: "A quarter turn clockwise from north is east.",
+  },
+  {
+    id: "spa-033",
+    category: "spatial",
+    difficulty: 1,
+    prompt: "How many faces does a cube have?",
+    answer: n(6),
+    explanation: "Top, bottom and four sides.",
+  },
+  {
+    id: "spa-034",
+    category: "spatial",
+    difficulty: 2,
+    prompt:
+      "A square piece of paper is folded exactly in half once. What shape is the folded paper?",
+    answer: c(["A rectangle", "A triangle", "A smaller square", "A diamond"], 0),
+    explanation: "Halving a square across its middle gives a rectangle twice as long as it is wide.",
+  },
+  {
+    id: "spa-035",
+    category: "spatial",
+    difficulty: 2,
+    prompt: "You walk 3 km north and then 3 km south. How many kilometres are you from where you started?",
+    answer: n(0),
+    explanation: "The second leg exactly undoes the first.",
+  },
+  {
+    id: "spa-036",
+    category: "spatial",
+    difficulty: 2,
+    prompt: "A die shows 6 on top. Opposite faces add up to 7. What is on the bottom?",
+    answer: n(1),
+    explanation: "7 − 6 = 1.",
+  },
+  {
+    id: "spa-037",
+    category: "spatial",
+    difficulty: 3,
+    prompt: "You are facing west. You turn 180°, then 90° to your left. Which way are you facing?",
+    answer: c(["North", "South", "East", "West"], 0),
+    explanation: "West → east → north.",
+  },
+  {
+    id: "spa-038",
+    category: "spatial",
+    difficulty: 3,
+    prompt: "A rectangle measures 12 by 5. How long is its diagonal?",
+    answer: n(13),
+    explanation: "A 5–12–13 right triangle.",
+  },
+  {
+    id: "spa-039",
+    category: "spatial",
+    difficulty: 3,
+    prompt: "How many edges does a triangular prism have?",
+    answer: n(9),
+    explanation: "Three around each triangular end, plus three joining them.",
+  },
+  {
+    id: "spa-040",
+    category: "spatial",
+    difficulty: 3,
+    prompt:
+      "You look at a cube from directly opposite one of its corners. How many of its faces can you see at once?",
+    answer: n(3),
+    explanation: "The three faces that meet at the corner nearest you.",
+  },
+  {
+    id: "spa-041",
+    category: "spatial",
+    difficulty: 4,
+    prompt:
+      "A cube is painted on all six faces and cut into 27 identical smaller cubes. How many of them have paint on at least one face?",
+    answer: n(26),
+    explanation: "Only the single cube at the very centre is unpainted.",
+  },
+  {
+    id: "spa-042",
+    category: "spatial",
+    difficulty: 4,
+    prompt: "What is the angle in degrees between the hands of a clock at 3:30?",
+    answer: n(75),
+    explanation:
+      "The minute hand is at 180°. The hour hand is halfway between 3 and 4, at 105°.",
+  },
+  {
+    id: "spa-043",
+    category: "spatial",
+    difficulty: 4,
+    prompt:
+      "An ant stands on one corner of a cube and wants to reach the opposite corner, walking only along the edges. What is the fewest edges it must walk along?",
+    answer: n(3),
+    explanation:
+      "The opposite corner differs in all three directions, so three edges are needed — one for each.",
+  },
+  {
+    id: "spa-044",
+    category: "spatial",
+    difficulty: 5,
+    prompt:
+      "A 5 × 5 × 5 cube is painted on all six faces and cut into 125 unit cubes. How many have paint on exactly two faces?",
+    answer: n(36),
+    explanation:
+      "The two-face cubes lie along the edges without being corners: 12 edges × 3 cubes each.",
+  },
+  {
+    id: "spa-045",
+    category: "spatial",
+    difficulty: 5,
+    prompt:
+      "A 4 × 4 × 4 cube is painted on all six faces and cut into 64 unit cubes. How many have paint on exactly two faces?",
+    answer: n(24),
+    explanation: "12 edges, each contributing the 2 cubes between its corners.",
+  },
 ];

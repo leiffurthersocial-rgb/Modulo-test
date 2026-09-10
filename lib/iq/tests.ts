@@ -39,6 +39,20 @@ export const TESTS: TestDefinition[] = [
     difficultyProfile: GENTLE,
   },
   {
+    id: "quick-adaptive",
+    name: "Quick Adaptive Test",
+    tagline: "6–12 questions · adjusts as you go",
+    description:
+      "The short test, made to work harder. It aims each question at your current estimate instead of asking a fixed set, which buys a noticeably tighter result than the Quick test for the same handful of questions — and stops early once it has seen enough.",
+    categories: ["logical", "numerical", "pattern", "spatial", "verbal"],
+    questionCount: 12,
+    minQuestions: 6,
+    targetStandardError: 7,
+    adaptive: true,
+    timeLimitSec: 10 * 60,
+    difficultyProfile: BALANCED,
+  },
+  {
     id: "adaptive",
     name: "Adaptive Test",
     tagline: "10–24 questions · adjusts as you go",
@@ -65,7 +79,12 @@ export const TESTS: TestDefinition[] = [
   },
 ];
 
-export const FULL_SPECTRUM_TEST_IDS = ["quick", "standard", "adaptive"] as const;
+export const FULL_SPECTRUM_TEST_IDS = [
+  "quick",
+  "quick-adaptive",
+  "standard",
+  "adaptive",
+] as const;
 
 export function getTest(id: string): TestDefinition | undefined {
   return TESTS.find((t) => t.id === id);

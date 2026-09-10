@@ -268,11 +268,11 @@ function build(): Question[] {
     }
   };
 
-  take(rotationMatrix, 14);
-  take(countMatrix, 10);
-  take(fillMatrix, 10);
-  take(oddOneOut, 16);
-  take(mentalRotation, 16);
+  take(rotationMatrix, 20);
+  take(countMatrix, 14);
+  take(fillMatrix, 14);
+  take(oddOneOut, 22);
+  take(mentalRotation, 22);
   return out;
 }
 

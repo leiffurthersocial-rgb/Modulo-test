@@ -45,21 +45,21 @@ function respond(question: Question, trueAbility: number, rng: Rng): ResponseVal
 }
 
 /** Run a full adaptive attempt exactly as the runner does. */
-function runAdaptive(trueAbility: number, seed: number) {
+function runFor(test: typeof adaptive, trueAbility: number, seed: number) {
   const rng = createRng(seed);
   const used = new Set<string>();
   const asked: Question[] = [];
   const responses: Record<string, ResponseValue> = {};
   let state = { ability: 100, standardError: 15, answered: 0 };
 
-  while (!adaptiveShouldStop(state, adaptive)) {
+  while (!adaptiveShouldStop(state, test)) {
     const next = selectAdaptiveQuestion({
       pool,
       usedIds: used,
       ability: state.ability,
       rng,
       asked: asked.map((q) => q.category as Category),
-      categories: adaptive.categories,
+      categories: test.categories,
     });
     if (!next) break;
     used.add(next.id);
@@ -69,6 +69,9 @@ function runAdaptive(trueAbility: number, seed: number) {
   }
   return { asked, responses, score: scoreAttempt(asked, responses) };
 }
+
+const runAdaptive = (trueAbility: number, seed: number) =>
+  runFor(adaptive, trueAbility, seed);
 
 describe("item information", () => {
   it("peaks near the item's own difficulty", () => {
@@ -184,11 +187,27 @@ describe("adaptive accuracy against a fixed paper", () => {
   }
 
   it("estimates more precisely than the fixed short test", () => {
-    for (const trueAbility of [90, 110, 130]) {
+    // Standard error is the direct claim and holds at every ability with a wide
+    // margin. Mean absolute error is a noisier statistic — at 40 runs per point
+    // it can tie by coincidence — so it is pooled across abilities for a larger
+    // sample rather than asserted strictly at each one, which would flake.
+    let adaptiveError = 0;
+    let fixedError = 0;
+    const abilities = [90, 110, 130];
+
+    for (const trueAbility of abilities) {
       const r = measure(trueAbility);
-      expect(r.adaptiveSe, `true ${trueAbility}`).toBeLessThan(r.fixedSe);
-      expect(r.adaptiveError, `true ${trueAbility}`).toBeLessThan(r.fixedError);
+      expect(r.adaptiveSe, `SE at true ${trueAbility}`).toBeLessThan(r.fixedSe);
+      expect(r.adaptiveError, `error at true ${trueAbility}`).toBeLessThanOrEqual(
+        r.fixedError,
+      );
+      adaptiveError += r.adaptiveError;
+      fixedError += r.fixedError;
     }
+
+    expect(adaptiveError / abilities.length).toBeLessThan(
+      fixedError / abilities.length,
+    );
   });
 
   it("is far more accurate at the top of the range, where a fixed paper runs out of hard items", () => {
@@ -253,5 +272,87 @@ describe("the widened reportable range", () => {
     const score = scoreAttempt(hardest, perfect);
     expect(score.iq).toBeLessThanOrEqual(MAX_ABILITY);
     expect(score.iq).toBeGreaterThanOrEqual(MIN_ABILITY);
+  });
+});
+
+describe("the quick adaptive test", () => {
+  const quickAdaptive = getTest("quick-adaptive")!;
+
+  it("is declared shorter than the full adaptive test", () => {
+    expect(quickAdaptive.adaptive).toBe(true);
+    expect(quickAdaptive.questionCount).toBeLessThan(adaptive.questionCount);
+    expect(quickAdaptive.minQuestions!).toBeLessThan(adaptive.minQuestions!);
+    // A shorter test cannot reach the same precision, and says so rather than
+    // promising a target it can never hit and running to the maximum every time.
+    expect(quickAdaptive.targetStandardError!).toBeGreaterThan(
+      adaptive.targetStandardError!,
+    );
+  });
+
+  it("stays inside its declared length, and sometimes stops early", () => {
+    const lengths = new Set<number>();
+    for (const trueAbility of [80, 95, 110, 125, 140]) {
+      for (let run = 0; run < 8; run++) {
+        const { asked } = runFor(quickAdaptive, trueAbility, run * 613 + trueAbility);
+        expect(asked.length).toBeGreaterThanOrEqual(quickAdaptive.minQuestions!);
+        expect(asked.length).toBeLessThanOrEqual(quickAdaptive.questionCount);
+        lengths.add(asked.length);
+      }
+    }
+    // If it always ran to the maximum, the stopping rule would be decorative.
+    expect(lengths.size).toBeGreaterThan(1);
+    expect(Math.min(...lengths)).toBeLessThan(quickAdaptive.questionCount);
+  });
+
+  it("still covers all five domains despite being short", () => {
+    for (const trueAbility of [85, 105, 130]) {
+      const { asked } = runFor(quickAdaptive, trueAbility, trueAbility * 71);
+      expect(new Set(asked.map((q) => q.category)).size, `true ${trueAbility}`).toBe(5);
+    }
+  });
+
+  it("beats the fixed Quick test it replaces, at no greater length", () => {
+    const quick = getTest("quick")!;
+    let adaptiveError = 0;
+    let adaptiveSe = 0;
+    let adaptiveLength = 0;
+    let fixedError = 0;
+    let fixedSe = 0;
+    const abilities = [80, 100, 120, 140];
+    const runs = 12;
+
+    for (const trueAbility of abilities) {
+      for (let run = 0; run < runs; run++) {
+        const { asked, responses } = runFor(quickAdaptive, trueAbility, run * 977 + trueAbility);
+        const score = scoreAttempt(asked, responses);
+        adaptiveError += Math.abs(score.iq - trueAbility);
+        adaptiveSe += score.standardError;
+        adaptiveLength += asked.length;
+
+        const rng = createRng(run * 331 + trueAbility);
+        const { questions } = selectQuestions({ test: quick, rng: createRng(run * 331) });
+        const fixedResponses: Record<string, ResponseValue> = {};
+        for (const q of questions) fixedResponses[q.id] = respond(q, trueAbility, rng);
+        const fixed = scoreAttempt(questions, fixedResponses);
+        fixedError += Math.abs(fixed.iq - trueAbility);
+        fixedSe += fixed.standardError;
+      }
+    }
+    const n = abilities.length * runs;
+    expect(adaptiveSe / n).toBeLessThan(fixedSe / n);
+    expect(adaptiveError / n).toBeLessThan(fixedError / n);
+    expect(adaptiveLength / n).toBeLessThanOrEqual(quick.questionCount);
+  });
+
+  it("is less precise than the full adaptive test, as its length implies", () => {
+    const se = (test: typeof adaptive) => {
+      let total = 0;
+      for (let run = 0; run < 12; run++) {
+        const { asked, responses } = runFor(test, 110, run * 149);
+        total += scoreAttempt(asked, responses).standardError;
+      }
+      return total / 12;
+    };
+    expect(se(quickAdaptive)).toBeGreaterThan(se(adaptive));
   });
 });

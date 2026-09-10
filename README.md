@@ -20,9 +20,10 @@ defaults.
 
 ## What's here
 
-- **3 IQ tests, all full-spectrum** — Quick and Standard (fixed-length) plus Adaptive, which
-  picks each question from how the previous ones went for a tighter estimate at any length.
-- **257 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
+- **4 IQ tests, all full-spectrum** — Quick and Standard (fixed-length) plus Quick Adaptive
+  (6–12 items) and Adaptive (10–24), which pick each question from how the previous ones went
+  for a tighter estimate at any length.
+- **351 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
   five formats: multiple choice, free numeric entry, symbolic series, 3×3 abstract
   matrices and figure choice. Visual items are generated from explicit rules with a fixed
   seed, so every figure has a provably unique answer and never shifts between renders.
@@ -68,6 +69,10 @@ An item only carries information about ability near its own difficulty, so a fix
 spends most of its questions in the wrong place. The Adaptive Test re-estimates ability after
 every answer and asks next whichever unseen item is most informative at that estimate,
 stopping when the standard error hits its target or at 24 questions.
+
+Two lengths are offered. **Quick Adaptive** (6–12 items) beats the fixed 12-item Quick test on
+every measure while asking fewer questions on average — SE 7.0 vs 8.5, mean error 7.4 vs 9.8 —
+and **Adaptive** (10–24) goes further still.
 
 Simulated against takers of known ability (`tests/adaptive.test.ts` asserts these hold):
 

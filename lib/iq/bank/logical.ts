@@ -575,4 +575,163 @@ export const logicalQuestions: Question[] = [
     answer: c(["Q is false", "Q is true", "P is false", "Nothing follows"], 0),
     explanation: "If the conjunction fails and P holds, the failure must come from Q.",
   },
+  {
+    id: "log-051",
+    category: "logical",
+    difficulty: 1,
+    prompt:
+      "Every book on this shelf is red. The book in my hand came from this shelf. What colour is it?",
+    answer: c(["Red", "It cannot be determined", "Some other colour", "Red or blue"], 0),
+    explanation: "A universal rule applied to one member of the group.",
+  },
+  {
+    id: "log-052",
+    category: "logical",
+    difficulty: 1,
+    prompt:
+      "Every player on the team wears blue. Sam is not wearing blue. Is Sam on the team?",
+    answer: c(["No", "Yes", "It cannot be determined", "Only if he changes"], 0),
+    explanation: "Failing a property that every member has rules Sam out.",
+  },
+  {
+    id: "log-053",
+    category: "logical",
+    difficulty: 1,
+    prompt: "If it is Tuesday, the shop is closed. Today the shop is open. Is it Tuesday?",
+    answer: c(["No", "Yes", "It cannot be determined", "Only in the morning"], 0),
+    explanation: "The shop being open contradicts what Tuesday would guarantee.",
+  },
+  {
+    id: "log-054",
+    category: "logical",
+    difficulty: 1,
+    prompt: "Maya is taller than Leo. Leo is taller than Sam. Who is the shortest?",
+    answer: c(["Sam", "Leo", "Maya", "It cannot be determined"], 0),
+    explanation: "Height comparison is transitive: Maya, then Leo, then Sam.",
+  },
+  {
+    id: "log-055",
+    category: "logical",
+    difficulty: 2,
+    prompt:
+      "Some of the cars in the car park are electric. Every electric car is quiet. Therefore:",
+    answer: c(
+      [
+        "Some cars in the car park are quiet",
+        "Every car in the car park is quiet",
+        "No car in the car park is quiet",
+        "Every quiet car is electric",
+      ],
+      0,
+    ),
+    explanation: "The electric ones inherit quietness, so at least some are quiet.",
+  },
+  {
+    id: "log-056",
+    category: "logical",
+    difficulty: 2,
+    prompt: "None of the chairs in this room are wooden. The chair I am sitting on is wooden. Therefore:",
+    answer: c(
+      [
+        "I am not sitting in this room",
+        "I am sitting in this room",
+        "The room has no chairs",
+        "Some chairs in the room are wooden",
+      ],
+      0,
+    ),
+    explanation:
+      "A wooden chair cannot be one of the chairs in a room where none are wooden.",
+  },
+  {
+    id: "log-057",
+    category: "logical",
+    difficulty: 2,
+    prompt:
+      "Five boxes stand in a row. The red box is third from the left. How many boxes are to the right of it?",
+    answer: n(2),
+    explanation: "Two boxes sit to its left and two to its right.",
+  },
+  {
+    id: "log-058",
+    category: "logical",
+    difficulty: 2,
+    prompt:
+      "A club meets every third day. It met on the 4th of the month. On which date does it next meet?",
+    answer: n(7),
+    explanation: "Three days after the 4th is the 7th.",
+  },
+  {
+    id: "log-059",
+    category: "logical",
+    difficulty: 3,
+    prompt:
+      "Eight runners finish a race. Ana finishes ahead of exactly five of them. In which position did she finish?",
+    answer: n(3),
+    explanation:
+      "Five runners are behind her, so two are ahead — which puts her third.",
+  },
+  {
+    id: "log-060",
+    category: "logical",
+    difficulty: 3,
+    prompt: "Some A are B. No B are C. Which must be true?",
+    answer: c(
+      ["Some A are not C", "No A are C", "All A are C", "Some B are C"],
+      0,
+    ),
+    explanation:
+      "The A that are B cannot be C, so at least some A fall outside C. Other A might still be C.",
+  },
+  {
+    id: "log-061",
+    category: "logical",
+    difficulty: 5,
+    prompt:
+      "On an island each resident always lies or always tells the truth. X says 'Y tells the truth.' Y says 'X and I are of different types.' What is the case?",
+    answer: c(
+      ["Both lie", "Both tell the truth", "X lies and Y is truthful", "X is truthful and Y lies"],
+      0,
+    ),
+    explanation:
+      "If X were truthful, Y would be truthful too, and Y's claim of difference would then be false — impossible for a truthful Y. So X lies, making Y a liar as well, and Y's false claim of difference fits: they are the same type.",
+  },
+  {
+    id: "log-062",
+    category: "logical",
+    difficulty: 5,
+    prompt:
+      "Three people guess how many coins are in a jar: 24, 30 and 27. One guess is three too high, one is three too low, and one is exactly right. How many coins are in the jar?",
+    answer: n(27),
+    explanation:
+      "The three guesses must be the true number, three above it and three below it. Only 27 sits in the middle of 24 and 30.",
+  },
+  {
+    id: "log-063",
+    category: "logical",
+    difficulty: 4,
+    prompt:
+      "You have eight balls; one is slightly heavier and the rest are identical. Using only a balance scale, what is the minimum number of weighings that guarantees finding it?",
+    answer: n(2),
+    explanation:
+      "Weigh three against three. If they balance, one more weighing separates the remaining two; if not, one more weighing finds it among the heavy three.",
+  },
+  {
+    id: "log-064",
+    category: "logical",
+    difficulty: 5,
+    prompt:
+      "A card has one sentence on each side. Side A reads: 'The sentence on side B is true.' Side B reads: 'The sentence on side A is false.' Which of these is the case?",
+    answer: c(
+      [
+        "No assignment of true and false to the two sides is consistent",
+        "Both sentences are true",
+        "Both sentences are false",
+        "Side A is true and side B is false",
+      ],
+      0,
+    ),
+    explanation:
+      "Suppose A is true; then B is true, so A is false. Suppose A is false; then B is false, so A is true. Both routes contradict themselves.",
+  },
 ];

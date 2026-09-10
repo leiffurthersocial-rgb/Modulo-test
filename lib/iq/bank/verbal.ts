@@ -348,4 +348,160 @@ export const verbalQuestions: Question[] = [
     explanation:
       "Seven days make a week and a fixed number of pages make a chapter — a unit and the larger unit it is counted into. A season contains months, but the count varies, and an hour is not a part of a clock.",
   },
+  {
+    id: "ver-035",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Hand is to arm as foot is to:",
+    answer: c(["Leg", "Shoe", "Toe", "Floor"], 0),
+    explanation: "Each pair links a body part to the limb it is attached to.",
+  },
+  {
+    id: "ver-036",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Chair", "Cat", "Dog", "Horse"], 0),
+    explanation: "The other three are animals.",
+  },
+  {
+    id: "ver-037",
+    category: "verbal",
+    difficulty: 1,
+    prompt: "Sun is to day as moon is to:",
+    answer: c(["Night", "Star", "Sky", "Light"], 0),
+    explanation: "Each pair links the light in the sky to the time it belongs to.",
+  },
+  {
+    id: "ver-038",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Shoe is to foot as glove is to:",
+    answer: c(["Hand", "Winter", "Wool", "Finger"], 0),
+    explanation:
+      "Each pair links a covering to the body part it covers. A glove covers the whole hand, not one finger.",
+  },
+  {
+    id: "ver-039",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Circle", "Red", "Blue", "Green"], 0),
+    explanation: "The other three are colours; a circle is a shape.",
+  },
+  {
+    id: "ver-040",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Teacher is to school as farmer is to:",
+    answer: c(["Farm", "Tractor", "Crop", "Village"], 0),
+    explanation: "Each pair links a worker to the place they work.",
+  },
+  {
+    id: "ver-041",
+    category: "verbal",
+    difficulty: 2,
+    prompt: "Hungry is to food as tired is to:",
+    answer: c(["Sleep", "Bed", "Work", "Night"], 0),
+    explanation: "Each pair links a need to the thing that satisfies it.",
+  },
+  {
+    id: "ver-042",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Bee is to honey as cow is to:",
+    answer: c(["Milk", "Grass", "Field", "Farmer"], 0),
+    explanation: "Each pair links an animal to what it produces.",
+  },
+  {
+    id: "ver-043",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Library is to book as garage is to:",
+    answer: c(["Car", "Tool", "House", "Door"], 0),
+    explanation: "Each pair links a place to the thing it is built to store.",
+  },
+  {
+    id: "ver-044",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Which word is the odd one out?",
+    answer: c(["Desert", "River", "Lake", "Ocean"], 0),
+    explanation: "The other three are bodies of water.",
+  },
+  {
+    id: "ver-045",
+    category: "verbal",
+    difficulty: 3,
+    prompt: "Which pair relates in the same way as 'kitchen : cooking'?",
+    answer: c(
+      ["Bedroom : sleeping", "House : room", "Chef : kitchen", "Oven : heat"],
+      0,
+    ),
+    explanation:
+      "Both are 'a room and the activity it is for'. House and room is whole-to-part, and chef and kitchen is person-to-place.",
+  },
+  {
+    id: "ver-046",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "Wall is to brick as sentence is to:",
+    answer: c(["Word", "Letter", "Page", "Meaning"], 0),
+    explanation:
+      "A wall is built from bricks and a sentence from words. Letters build words, one level further down.",
+  },
+  {
+    id: "ver-047",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "Which word does NOT belong with the others?",
+    answer: c(["Clock", "Hour", "Minute", "Second"], 0),
+    explanation:
+      "The other three are units of time; a clock is the instrument that measures it.",
+  },
+  {
+    id: "ver-048",
+    category: "verbal",
+    difficulty: 4,
+    prompt: "Which pair relates in the same way as 'artist : painting'?",
+    answer: c(
+      ["Baker : bread", "Painter : brush", "Museum : art", "Painting : wall"],
+      0,
+    ),
+    explanation:
+      "Both are 'a maker and the thing they make'. A brush is a tool, a museum is a place, and a wall is where a painting hangs.",
+  },
+  {
+    id: "ver-049",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "Which pair relates in the same way as 'thermometer : temperature'?",
+    answer: c(
+      ["Scales : weight", "Doctor : patient", "Hot : cold", "Clock : wall"],
+      0,
+    ),
+    explanation:
+      "Each is an instrument and the quantity it measures. The others are a person and their client, an opposite pair, and an object and its location.",
+  },
+  {
+    id: "ver-050",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "Rain is to flood as spark is to:",
+    answer: c(["Fire", "Match", "Smoke", "Heat"], 0),
+    explanation:
+      "Each pair links a small beginning to the large event it can grow into. A match makes the spark rather than resulting from it.",
+  },
+  {
+    id: "ver-051",
+    category: "verbal",
+    difficulty: 5,
+    prompt: "Which pair relates in the same way as 'plan : building'?",
+    answer: c(
+      ["Recipe : meal", "Architect : plan", "Wall : brick", "Kitchen : cooking"],
+      0,
+    ),
+    explanation:
+      "Both are 'a set of instructions and the thing produced by following them'. An architect makes the plan rather than being made from it.",
+  },
 ];
