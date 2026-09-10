@@ -66,10 +66,11 @@ export default function HomePage() {
         <div className="flex flex-col gap-4 border-t border-ink-800 pt-10 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
             <Eyebrow>IQ tests</Eyebrow>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Pick the depth you want</h2>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-fog-100 sm:text-3xl">Three ways to measure the same thing</h2>
             <p className="mt-3 text-[14.5px] leading-relaxed text-fog-300">
-              Two full-spectrum tests give you an overall estimate. The focused tests go deeper into a
-              single domain and are weighted accordingly when your results are combined.
+              All three sample every domain and are scored on the same scale, so results are directly
+              comparable. Quick and Standard ask a fixed set of questions; Adaptive picks each one from
+              how the previous ones went, which is what earns it the tightest estimate for its length.
             </p>
           </div>
           <Link href="/tests" className="shrink-0 text-[13.5px] text-sand-400 hover:text-sand-300">View all tests →</Link>

@@ -20,8 +20,8 @@ defaults.
 
 ## What's here
 
-- **8 IQ tests** — Quick, Standard and Challenge (full-spectrum) plus focused Logic,
-  Pattern, Numerical, Spatial and Verbal tests.
+- **3 IQ tests, all full-spectrum** — Quick and Standard (fixed-length) plus Adaptive, which
+  picks each question from how the previous ones went for a tighter estimate at any length.
 - **257 questions** across logical, numerical, pattern, spatial and verbal reasoning, in
   five formats: multiple choice, free numeric entry, symbolic series, 3×3 abstract
   matrices and figure choice. Visual items are generated from explicit rules with a fixed

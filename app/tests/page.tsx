@@ -14,9 +14,9 @@ export default function TestsPage() {
         {TESTS.length} assessments, one scoring model
       </h1>
       <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-fog-300">
-        Every test draws from the same bank of {QUESTION_BANK.length} questions and is scored
-        with the same ability model, so results are comparable. Full-spectrum tests carry more
-        weight in your combined estimate than focused ones.
+        Every test draws from the same bank of {QUESTION_BANK.length} questions, samples all
+        five domains, and is scored with the same ability model, so results are directly
+        comparable across all three.
       </p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {TESTS.map((test) => <TestCard key={test.id} test={test} />)}

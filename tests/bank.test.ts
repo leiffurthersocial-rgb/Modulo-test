@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { QUESTION_BANK, bankCoverage, validateBank } from "@/lib/iq/bank";
-import { TESTS, getTest } from "@/lib/iq/tests";
+import { TESTS } from "@/lib/iq/tests";
 import { CATEGORIES, isCorrect, type Question } from "@/lib/iq/types";
 
 describe("question bank", () => {
@@ -170,8 +170,11 @@ describe("language accessibility", () => {
   });
 
   it("still has enough verbal items, spread across the difficulty levels", () => {
+    // Modulo no longer offers a dedicated single-domain verbal test, but a
+    // full-spectrum paper still needs a healthy pool to draw from without
+    // recycling constantly.
     const verbal = QUESTION_BANK.filter((q) => q.category === "verbal");
-    expect(verbal.length).toBeGreaterThanOrEqual(getTest("verbal")!.questionCount);
+    expect(verbal.length).toBeGreaterThanOrEqual(15);
     const levels = new Set(verbal.map((q) => q.difficulty));
     expect(levels.size).toBe(5);
   });

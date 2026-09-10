@@ -1,11 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { QUESTION_BANK } from "@/lib/iq/bank";
 import { categoryPlan, difficultyPlan, selectQuestions } from "@/lib/iq/select";
-import { TESTS, getTest } from "@/lib/iq/tests";
+import { TESTS, getTest, type TestDefinition } from "@/lib/iq/tests";
 import { createRng } from "@/lib/rng";
 
 const standard = getTest("standard")!;
-const logic = getTest("logic")!;
+
+/**
+ * A single-category test, used only to exercise the selector's behaviour on a
+ * narrow domain (pool exhaustion, partial novelty). Not part of the app's own
+ * catalogue — Modulo only offers full-spectrum tests — but the selector still
+ * has to handle a narrow one correctly for a single domain's coverage, and this
+ * is the cheapest way to pin that down.
+ */
+const logic: TestDefinition = {
+  id: "logic-probe",
+  name: "Logic probe",
+  tagline: "test-only",
+  description: "test-only",
+  categories: ["logical"],
+  questionCount: 15,
+  timeLimitSec: null,
+  difficultyProfile: { 1: 1, 2: 2, 3: 3, 4: 3, 5: 2 },
+};
 
 describe("difficultyPlan", () => {
   it("produces exactly one target per slot", () => {
@@ -114,23 +131,20 @@ describe("selectQuestions", () => {
 });
 
 describe("test catalogue", () => {
-  it("keeps every test inside the bank's capacity per difficulty shape", () => {
+  it("keeps every non-adaptive test inside the bank's capacity per difficulty shape", () => {
     for (const test of TESTS) {
+      if (test.adaptive) continue; // adaptive length depends on the simulated taker, not the seed
       const result = selectQuestions({ test, rng: createRng(101) });
       expect(result.questions, test.id).toHaveLength(test.questionCount);
     }
   });
 
-  it("makes the challenge test harder than the standard one", () => {
-    const hard = getTest("challenge")!;
-    const standard = getTest("standard")!;
-    const mean = (id: string) => {
-      const test = getTest(id)!;
-      const { questions } = selectQuestions({ test, rng: createRng(202) });
-      return questions.reduce((s, q) => s + q.difficulty, 0) / questions.length;
-    };
-    expect(hard.questionCount).toBeGreaterThan(standard.questionCount);
-    expect(mean("challenge")).toBeGreaterThan(mean("standard"));
+  it("only offers full-spectrum tests", () => {
+    // Modulo dropped its single-domain tests; every remaining test should
+    // sample all five categories rather than narrowing to one.
+    for (const test of TESTS) {
+      expect(new Set(test.categories).size, test.id).toBe(5);
+    }
   });
 });
 
